@@ -1,4 +1,6 @@
 import sys
+import numpy
+import pandas
 
 class DecisionTree:
   def __init__(self, feature):
@@ -18,6 +20,7 @@ def ID3(S, Attributes, Label):
   """
   # 1. Create  Root Node
   # 2. A = Attribute that best splits S
+  # NOTE: do steps 2 then 1. 
   # 3. for each v that A can take
     # a. add new branch to the  tree  A=v
     # let  S_v be  subset S where  A = v
@@ -32,6 +35,11 @@ def ID3(S, Attributes, Label):
 def information_gain():
   return 0
 
+def entropy(S):
+  """
+  returns the entropy of a set
+  """
+  return 0
 
 def gini_index():
   return 0
@@ -39,16 +47,16 @@ def gini_index():
 def majority_error():
   return 0
 
-def get_data(file_path):
-  with open(file_path) as file:
-    for line in file:
-      terms = line.strip().split(',')
-      #process singular trainning example
-      #likely put in a dict
+def get_training_data(file_path):
+  #TODO make headers generic
+  train_df = pandas.read_csv(file_path, names=["buying", "maint", "doors", "persons", "lug_boot", "safety", "label"])
+  print("read the data")
+  return train_df
 
 if __name__ == "__main__":
-    # argv will likely  look  like Train.csv split_function Test.csv
-    if len(sys.argv) >= 2:
-        get_data(sys.argv[1])
-    else: 
-        print("no data given")
+  # argv will likely  look  like Train.csv split_function Test.csv
+  if len(sys.argv) >= 2:
+    train_df =  get_training_data(sys.argv[1])
+    print(train_df)
+  else: 
+    print("no data given")
