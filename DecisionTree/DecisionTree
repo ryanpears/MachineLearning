@@ -1,23 +1,43 @@
 import sys
 
 class DecisionTree:
-  def __init__(self, training_data, split_function):
-    self.training_data = training_data
-    self.split_function = split_function
+  def __init__(self, feature):
+    self.feature =  feature
+    self.children = [] #maybe  a dict?
+  
+  def add_child(self, child):
+    self.children.append(child)
 
-  def ID3(self):
-    return
+
+def ID3(S, Attributes, Label):
+  """
+  construncts the desicion tree
+  S is the set of examples
+  Label is the target label ??
+  Attributes is the set of measurred attributes
+  """
+  # 1. Create  Root Node
+  # 2. A = Attribute that best splits S
+  # 3. for each v that A can take
+    # a. add new branch to the  tree  A=v
+    # let  S_v be  subset S where  A = v
+    # c. if S_v is empty  
+      # add leaf node with most common value of label
+    # d. else
+      #add to subtree ID3(S_v, Attributes -  {A}, Label)
+      
+  #  4. return root
   
 # functions for splitting given to the Decision tree
 def information_gain():
-  return
+  return 0
 
 
 def gini_index():
-  return
+  return 0
 
 def majority_error():
-  return
+  return 0
 
 def get_data(file_path):
   with open(file_path) as file:
