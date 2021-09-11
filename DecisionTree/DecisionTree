@@ -32,22 +32,32 @@ def ID3(S, Attributes, Label):
   #  4. return root
   
 # functions for splitting given to the Decision tree
-def information_gain():
-  return 0
+def information_gain(df, attribute):
+  total_entropy, total_values = entropy(df)
+  allAttributes= df.groupby(attribute)[attribute].count()
+  total_attribute_entropy = 0
+  for index, row in allAttributes.items():
+    # print(index)
+    # print(row)
+    print(df.loc[df[attribute] == index])
+    
+    attribute_entropy, count = entropy(df.loc[df[attribute] == index])
+    total_attribute_entropy += (count / total_values) * attribute_entropy
+  return (total_entropy - total_attribute_entropy)
 
 def entropy(df):
   """
   returns the entropy of a set
-  I think this is ok
+  I think this is ok works on test1
   """
-  entropy = 0
+  set_entropy = 0
   allLabels = df.groupby("label")["label"].count()
   total  = allLabels.sum()
-  print(allLabels)
+  
   for index, row in allLabels.items():
     probOfLabel = row/total
-    entropy -= probOfLabel * numpy.log2(probOfLabel)
-  return entropy
+    set_entropy -= probOfLabel * numpy.log2(probOfLabel)
+  return set_entropy, total
 
 def gini_index():
   return 0
@@ -57,7 +67,8 @@ def majority_error():
 
 def get_training_data(file_path):
   #TODO make headers generic
-  train_df = pandas.read_csv(file_path, names=["buying", "maint", "doors", "persons", "lug_boot", "safety", "label"])
+  # train_df = pandas.read_csv(file_path, names=["buying", "maint", "doors", "persons", "lug_boot", "safety", "label"])
+  train_df = pandas.read_csv(file_path)
   # print("read the data")
   return train_df
 
@@ -66,7 +77,19 @@ if __name__ == "__main__":
   if len(sys.argv) >= 2:
     train_df =  get_training_data(sys.argv[1])
     # print(train_df)
-    entropy = entropy(train_df)
-    print(entropy)
+    e, c = entropy(train_df)
+    print(e)
+    print("x1")
+    ig = information_gain(train_df, "x1")
+    print(ig)
+    print("x2")
+    ig = information_gain(train_df, "x2")
+    print(ig)
+    print("x3")
+    ig = information_gain(train_df, "x3")
+    print(ig)
+    print("x4")
+    ig = information_gain(train_df, "x4")
+    print(ig)
   else: 
     print("no data given")
