@@ -33,18 +33,16 @@ def ID3(S, Attributes, Label):
   #  4. return root
   
 # functions for splitting given to the Decision tree
-def information_gain(df, attribute):
-  total_entropy, total_values = entropy(df)
+# all work on test 1 and tennis
+def information_gain(df, attribute, splitFunction):
+  total_split_value, total_values = splitFunction(df)
   allAttributes= df.groupby(attribute)[attribute].count()
-  total_attribute_entropy = 0
+  total_attribute_split = 0
   for index, row in allAttributes.items():
-    # print(index)
-    # print(row)
-    # print(df.loc[df[attribute] == index])
     
-    attribute_entropy, count = entropy(df.loc[df[attribute] == index])
-    total_attribute_entropy += (count / total_values) * attribute_entropy
-  return (total_entropy - total_attribute_entropy)
+    attribute_split, count = splitFunction(df.loc[df[attribute] == index])
+    total_attribute_split += (count / total_values) * attribute_split
+  return (total_split_value - total_attribute_split)
 
 def entropy(df):
   """
@@ -60,50 +58,22 @@ def entropy(df):
     set_entropy -= probOfLabel * numpy.log2(probOfLabel)
   return set_entropy, total
 
-def information_gain_gi(df, attribute):
-  total_gi, total_values = gini_index(df)
-  # print(total_gi)
-  allAttributes= df.groupby(attribute)[attribute].count()
-  total_attribute_gi = 0
-  for index, row in allAttributes.items():
-    # print(index)
-    # print(row)
-    # print(df.loc[df[attribute] == index])
-    
-    attribute_gi, count = gini_index(df.loc[df[attribute] == index])
-    # print(attribute_gi)
-    total_attribute_gi += (count / total_values) * attribute_gi
-  return (total_gi - total_attribute_gi)
-
-
 def gini_index(df):
   """
-  really not sure
+  calculates  the gini index
   """
   allLabels = df.groupby("label")["label"].count()
   total  = allLabels.sum()
   squares = 0
   for index, row in allLabels.items():
-    # print(index)
-    # print(row)
-    # print(total)
     probOfLabel = row/total
     squares += probOfLabel * probOfLabel
   return (1-squares), total
 
-def information_gain_me(df, attribute):
-  total_entropy, total_values = majority_error(df)
-  allAttributes= df.groupby(attribute)[attribute].count()
-  total_attribute_entropy = 0
-  for index, row in allAttributes.items():
-    # print(row)
-    # print(df.loc[df[attribute] == index])
-    
-    attribute_entropy, count = majority_error(df.loc[df[attribute] == index])
-    total_attribute_entropy += (count / total_values) * attribute_entropy
-  return (total_entropy - total_attribute_entropy)
-
 def majority_error(df):
+  """
+  calculated the me
+  """
   allLabels = df.groupby("label")["label"].count()
   total = allLabels.sum()
   max = allLabels.max()
@@ -125,7 +95,7 @@ if __name__ == "__main__":
     # print(e)
     for col in train_df.columns:
       print("column is ", col)
-      me = information_gain_me(train_df, col)
+      me = information_gain(train_df, col, gini_index)
       print(me)
   else: 
     print("no data given")
