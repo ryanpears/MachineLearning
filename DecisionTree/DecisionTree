@@ -24,6 +24,7 @@ def ID3(S, Attributes, Label):
   # 3. for each v that A can take
     # a. add new branch to the  tree  A=v
     # let  S_v be  subset S where  A = v
+      # do the where remove the column
     # c. if S_v is empty  
       # add leaf node with most common value of label
     # d. else
@@ -39,7 +40,7 @@ def information_gain(df, attribute):
   for index, row in allAttributes.items():
     # print(index)
     # print(row)
-    print(df.loc[df[attribute] == index])
+    # print(df.loc[df[attribute] == index])
     
     attribute_entropy, count = entropy(df.loc[df[attribute] == index])
     total_attribute_entropy += (count / total_values) * attribute_entropy
@@ -59,11 +60,42 @@ def entropy(df):
     set_entropy -= probOfLabel * numpy.log2(probOfLabel)
   return set_entropy, total
 
-def gini_index():
-  return 0
+def information_gain_gi(df, attribute):
+  total_gi, total_values = gini_index(df)
+  # print(total_gi)
+  allAttributes= df.groupby(attribute)[attribute].count()
+  total_attribute_gi = 0
+  for index, row in allAttributes.items():
+    # print(index)
+    # print(row)
+    # print(df.loc[df[attribute] == index])
+    
+    attribute_gi, count = gini_index(df.loc[df[attribute] == index])
+    # print(attribute_gi)
+    total_attribute_gi += (count / total_values) * attribute_gi
+  return (total_gi - total_attribute_gi)
 
-def majority_error():
-  return 0
+
+def gini_index(df):
+  """
+  really not sure
+  """
+  allLabels = df.groupby("label")["label"].count()
+  total  = allLabels.sum()
+  squares = 0
+  for index, row in allLabels.items():
+    # print(index)
+    # print(row)
+    # print(total)
+    probOfLabel = row/total
+    squares += probOfLabel * probOfLabel
+  return (1-squares), total
+
+def majority_error(df):
+  allAttributes= df.groupby(attribute)[attribute].count()
+  total = allAttributes.sum()
+  max = allAttributes.max()
+  return (total - max)/max
 
 def get_training_data(file_path):
   #TODO make headers generic
@@ -77,19 +109,11 @@ if __name__ == "__main__":
   if len(sys.argv) >= 2:
     train_df =  get_training_data(sys.argv[1])
     # print(train_df)
-    e, c = entropy(train_df)
-    print(e)
-    print("x1")
-    ig = information_gain(train_df, "x1")
-    print(ig)
-    print("x2")
-    ig = information_gain(train_df, "x2")
-    print(ig)
-    print("x3")
-    ig = information_gain(train_df, "x3")
-    print(ig)
-    print("x4")
-    ig = information_gain(train_df, "x4")
-    print(ig)
+    # e, c = entropy(train_df)
+    # print(e)
+    for col in train_df.columns:
+      print("column is ", col)
+      me = information_gain_gi(train_df, col)
+      print(me)
   else: 
     print("no data given")
