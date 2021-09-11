@@ -35,11 +35,19 @@ def ID3(S, Attributes, Label):
 def information_gain():
   return 0
 
-def entropy(S):
+def entropy(df):
   """
   returns the entropy of a set
+  I think this is ok
   """
-  return 0
+  entropy = 0
+  allLabels = df.groupby("label")["label"].count()
+  total  = allLabels.sum()
+  print(allLabels)
+  for index, row in allLabels.items():
+    probOfLabel = row/total
+    entropy -= probOfLabel * numpy.log2(probOfLabel)
+  return entropy
 
 def gini_index():
   return 0
@@ -50,13 +58,15 @@ def majority_error():
 def get_training_data(file_path):
   #TODO make headers generic
   train_df = pandas.read_csv(file_path, names=["buying", "maint", "doors", "persons", "lug_boot", "safety", "label"])
-  print("read the data")
+  # print("read the data")
   return train_df
 
 if __name__ == "__main__":
   # argv will likely  look  like Train.csv split_function Test.csv
   if len(sys.argv) >= 2:
     train_df =  get_training_data(sys.argv[1])
-    print(train_df)
+    # print(train_df)
+    entropy = entropy(train_df)
+    print(entropy)
   else: 
     print("no data given")
