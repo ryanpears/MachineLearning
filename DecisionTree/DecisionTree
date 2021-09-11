@@ -91,11 +91,23 @@ def gini_index(df):
     squares += probOfLabel * probOfLabel
   return (1-squares), total
 
-def majority_error(df):
+def information_gain_me(df, attribute):
+  total_entropy, total_values = majority_error(df)
   allAttributes= df.groupby(attribute)[attribute].count()
-  total = allAttributes.sum()
-  max = allAttributes.max()
-  return (total - max)/max
+  total_attribute_entropy = 0
+  for index, row in allAttributes.items():
+    # print(row)
+    # print(df.loc[df[attribute] == index])
+    
+    attribute_entropy, count = majority_error(df.loc[df[attribute] == index])
+    total_attribute_entropy += (count / total_values) * attribute_entropy
+  return (total_entropy - total_attribute_entropy)
+
+def majority_error(df):
+  allLabels = df.groupby("label")["label"].count()
+  total = allLabels.sum()
+  max = allLabels.max()
+  return (total - max)/total, total
 
 def get_training_data(file_path):
   #TODO make headers generic
@@ -113,7 +125,7 @@ if __name__ == "__main__":
     # print(e)
     for col in train_df.columns:
       print("column is ", col)
-      me = information_gain_gi(train_df, col)
+      me = information_gain_me(train_df, col)
       print(me)
   else: 
     print("no data given")
