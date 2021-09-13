@@ -5,32 +5,70 @@ import pandas
 class DecisionTree:
   def __init__(self, feature):
     self.feature =  feature
-    self.children = [] #maybe  a dict?
+    self.children = {}
   
-  def add_child(self, child):
-    self.children.append(child)
+  def add_branch(self, branch, child):
+    self.children[branch] =  child
+  
+  def get_branch_keys(self):
+    return self.children.keys()
+
+  def __str__(self, level=0):
+    ret = "\t"*level+repr(self.feature)+"\n"
+    for child, value in self.children.items():
+      
+      ret += value.__str__(level+1)
+    return ret
 
 
-def ID3(S, Attributes, Label):
+def ID3(df, Attributes, Label):
   """
   construncts the desicion tree
   S is the set of examples
   Label is the target label ??
   Attributes is the set of measurred attributes
   """
+  print("in di3")
+  if is_unique(df["label"]):
+    return DecisionTree(df["label"].iloc[0])
   # 1. Create  Root Node
   # 2. A = Attribute that best splits S
   # NOTE: do steps 2 then 1. 
+  gain = 0
+  best_attribute = None
+  for attribute in Attributes:
+    poss_gain = information_gain(df, attribute, entropy)
+    if gain < poss_gain:
+      gain = poss_gain
+      best_attribute = attribute
+  print(best_attribute)
+  root = DecisionTree(best_attribute)
   # 3. for each v that A can take
+  all_values = df[best_attribute].unique()
+  print(all_values)
+  for value in all_values:
+    print(value)
     # a. add new branch to the  tree  A=v
+    root.add_branch(value,  None)
     # let  S_v be  subset S where  A = v
+    attribute_df = df[df[best_attribute] == value]
+    print(attribute_df)
+    print(attribute_df.empty)
       # do the where remove the column
     # c. if S_v is empty  
+    if attribute_df.empty:
+      # i think
+      root.add_branch(value, df['label'].value_counts().idxmax())
       # add leaf node with most common value of label
     # d. else
+    else:
+      #pass
+      #attribute_df = attribute_df.drop(best_attribute)
+      root.add_branch(value, ID3(attribute_df, attribute_df.columns[:-1], None))
       #add to subtree ID3(S_v, Attributes -  {A}, Label)
-      
+   
   #  4. return root
+  return root
   
 # functions for splitting given to the Decision tree
 # all work on test 1 and tennis
@@ -86,6 +124,10 @@ def get_training_data(file_path):
   # print("read the data")
   return train_df
 
+def is_unique(s):
+  a = s.to_numpy() # s.values (pandas<0.24)
+  return (a[0] == a).all()
+
 if __name__ == "__main__":
   # argv will likely  look  like Train.csv split_function Test.csv
   if len(sys.argv) >= 2:
@@ -93,9 +135,11 @@ if __name__ == "__main__":
     # print(train_df)
     # e, c = entropy(train_df)
     # print(e)
-    for col in train_df.columns:
-      print("column is ", col)
-      me = information_gain(train_df, col, gini_index)
-      print(me)
+    # for col in train_df.columns[:-1]:
+    #   print("column is ", col)
+    #   me = information_gain(train_df, col, gini_index)
+    #   print(me)
+    tree  = ID3(train_df, train_df.columns[:-1], None)
+    print(str(tree))
   else: 
     print("no data given")
