@@ -130,8 +130,14 @@ def test_data(tree, test_file,  columns):
 
 def process_row(row, tree):
   feature = tree.feature
+
   if tree.children:
-    return process_row(row, tree.children[row[feature]])
+    if row[feature] in tree.children.keys():
+      return process_row(row, tree.children[row[feature]])
+    else: 
+      # return most common label in case of this maybe?
+      print("not cool")
+      return False
   else:
     #leaf node
     return feature == row['label']
