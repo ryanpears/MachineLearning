@@ -17,20 +17,20 @@ class DecisionTree:
     ret = "\t"*level+repr(self.feature)+"\n"
     for child, value in self.children.items():
       
-      ret += value.__str__(level+1)
+      ret += str(child) + value.__str__(level+1)
     return ret
 
 
-def ID3(df, Attributes, Label):
+def ID3(df, Attributes):
   """
   construncts the desicion tree
   S is the set of examples
   Label is the target label ??
   Attributes is the set of measurred attributes
   """
-  print("in di3")
+  # return if all the same label
   if is_unique(df["label"]):
-    return DecisionTree(df["label"].iloc[0])
+    return DecisionTree(df['label'].value_counts().idxmax())
   # 1. Create  Root Node
   # 2. A = Attribute that best splits S
   # NOTE: do steps 2 then 1. 
@@ -41,19 +41,17 @@ def ID3(df, Attributes, Label):
     if gain < poss_gain:
       gain = poss_gain
       best_attribute = attribute
-  print(best_attribute)
+ 
   root = DecisionTree(best_attribute)
   # 3. for each v that A can take
   all_values = df[best_attribute].unique()
-  print(all_values)
+  # print(all_values)
   for value in all_values:
-    print(value)
+   
     # a. add new branch to the  tree  A=v
     root.add_branch(value,  None)
     # let  S_v be  subset S where  A = v
     attribute_df = df[df[best_attribute] == value]
-    print(attribute_df)
-    print(attribute_df.empty)
       # do the where remove the column
     # c. if S_v is empty  
     if attribute_df.empty:
@@ -64,14 +62,12 @@ def ID3(df, Attributes, Label):
     else:
       #pass
       #attribute_df = attribute_df.drop(best_attribute)
-      root.add_branch(value, ID3(attribute_df, attribute_df.columns[:-1], None))
+      root.add_branch(value, ID3(attribute_df, attribute_df.columns[:-1]))
       #add to subtree ID3(S_v, Attributes -  {A}, Label)
    
   #  4. return root
   return root
   
-# functions for splitting given to the Decision tree
-# all work on test 1 and tennis
 def information_gain(df, attribute, splitFunction):
   total_split_value, total_values = splitFunction(df)
   allAttributes= df.groupby(attribute)[attribute].count()
@@ -117,29 +113,53 @@ def majority_error(df):
   max = allLabels.max()
   return (total - max)/total, total
 
-def get_training_data(file_path):
-  #TODO make headers generic
-  # train_df = pandas.read_csv(file_path, names=["buying", "maint", "doors", "persons", "lug_boot", "safety", "label"])
-  train_df = pandas.read_csv(file_path)
-  # print("read the data")
+def get_training_data(file_path, columns):
+  train_df = pandas.read_csv(file_path, names=columns)
   return train_df
+
+def test_data(tree, test_file,  columns):
+  correct, incorrect = 0, 0
+  test_df = pandas.read_csv(test_file, names=columns)
+  for index, row in test_df.iterrows():
+    if process_row(row, tree):
+      correct  +=  1
+    else:
+      incorrect += 1
+
+  return correct, incorrect
+
+def process_row(row, tree):
+  feature = tree.feature
+  if tree.children:
+    return process_row(row, tree.children[row[feature]])
+  else:
+    #leaf node
+    return feature == row['label']
+  
 
 def is_unique(s):
   a = s.to_numpy() # s.values (pandas<0.24)
   return (a[0] == a).all()
 
 if __name__ == "__main__":
-  # argv will likely  look  like Train.csv split_function Test.csv
+  # argv will likely  look  like Train.csv Test.csv [labels] split_function max depth
+  # or probably Train.csv Test.csv [column names] split_function max depth
+  # i'd just love some properly formated data but nope.
   if len(sys.argv) >= 2:
-    train_df =  get_training_data(sys.argv[1])
-    # print(train_df)
-    # e, c = entropy(train_df)
-    # print(e)
-    # for col in train_df.columns[:-1]:
-    #   print("column is ", col)
-    #   me = information_gain(train_df, col, gini_index)
-    #   print(me)
-    tree  = ID3(train_df, train_df.columns[:-1], None)
-    print(str(tree))
+    training_file = sys.argv[1]
+    test_file = sys.argv[2]
+    columns = sys.argv[3].split(",")
+    split_funct = sys.argv[4]
+    max_depth = sys.argv[5]
+
+    train_df =  get_training_data(sys.argv[1], columns)
+    
+    tree = ID3(train_df, train_df.columns[:-1])
+    
+
+    #print(str(tree))
+    correct,  incorrect = test_data(tree, test_file, columns)
+    print("correct is ", correct)
+    print("incorrect is ", incorrect)
   else: 
     print("no data given")
