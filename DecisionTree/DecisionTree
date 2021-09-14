@@ -21,7 +21,7 @@ class DecisionTree:
     return ret
 
 
-def ID3(df, Attributes):
+def ID3(df, Attributes, max_depth,depth):
   """
   construncts the desicion tree
   S is the set of examples
@@ -29,7 +29,9 @@ def ID3(df, Attributes):
   Attributes is the set of measurred attributes
   """
   # return if all the same label
-  if is_unique(df["label"]):
+  
+  if is_unique(df["label"]) or (int(depth) == int(max_depth)):
+ 
     return DecisionTree(df['label'].value_counts().idxmax())
   # 1. Create  Root Node
   # 2. A = Attribute that best splits S
@@ -47,7 +49,6 @@ def ID3(df, Attributes):
   all_values = df[best_attribute].unique()
   # print(all_values)
   for value in Attributes[best_attribute]:
-    print(value)
     # a. add new branch to the  tree  A=v
     root.add_branch(value,  None)
     # let  S_v be  subset S where  A = v
@@ -63,7 +64,7 @@ def ID3(df, Attributes):
       #pass
       #attribute_df = attribute_df.drop(best_attribute)
       new_attributes = {key:val for key, val in attributes.items() if key != best_attribute}
-      root.add_branch(value, ID3(attribute_df, new_attributes))
+      root.add_branch(value, ID3(attribute_df, new_attributes, max_depth, depth+1))
       #add to subtree ID3(S_v, Attributes -  {A}, Label)
    
   #  4. return root
@@ -167,7 +168,7 @@ if __name__ == "__main__":
       attributes[a] = train_df[a].unique().flatten()
     print(attributes) 
     #tree = ID3(train_df, train_df.columns[:-1])
-    tree = ID3(train_df, attributes)
+    tree = ID3(train_df, attributes, max_depth, 0)
     
 
     print(str(tree))
