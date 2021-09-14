@@ -8,7 +8,7 @@ class DecisionTree:
     self.children = {}
   
   def add_branch(self, branch, child):
-    self.children[branch] =  child
+    self.children[branch] = child
   
   def get_branch_keys(self):
     return self.children.keys()
@@ -36,7 +36,7 @@ def ID3(df, Attributes):
   # NOTE: do steps 2 then 1. 
   gain = 0
   best_attribute = None
-  for attribute in Attributes:
+  for attribute in Attributes.keys():
     poss_gain = information_gain(df, attribute, entropy)
     if gain < poss_gain:
       gain = poss_gain
@@ -46,8 +46,8 @@ def ID3(df, Attributes):
   # 3. for each v that A can take
   all_values = df[best_attribute].unique()
   # print(all_values)
-  for value in all_values:
-   
+  for value in Attributes[best_attribute]:
+    print(value)
     # a. add new branch to the  tree  A=v
     root.add_branch(value,  None)
     # let  S_v be  subset S where  A = v
@@ -56,13 +56,14 @@ def ID3(df, Attributes):
     # c. if S_v is empty  
     if attribute_df.empty:
       # i think
-      root.add_branch(value, df['label'].value_counts().idxmax())
+      root.add_branch(value, DecisionTree(df['label'].value_counts().idxmax()))
       # add leaf node with most common value of label
     # d. else
     else:
       #pass
       #attribute_df = attribute_df.drop(best_attribute)
-      root.add_branch(value, ID3(attribute_df, attribute_df.columns[:-1]))
+      new_attributes = {key:val for key, val in attributes.items() if key != best_attribute}
+      root.add_branch(value, ID3(attribute_df, new_attributes))
       #add to subtree ID3(S_v, Attributes -  {A}, Label)
    
   #  4. return root
@@ -159,11 +160,17 @@ if __name__ == "__main__":
     max_depth = sys.argv[5]
 
     train_df =  get_training_data(sys.argv[1], columns)
-    
-    tree = ID3(train_df, train_df.columns[:-1])
+    #todo make a df of attributes with unique values so we can  created better trees
+    # attribute_df = train_df.apply(lambda col: col.unique())
+    attributes = {}
+    for a in columns[:-1]:
+      attributes[a] = train_df[a].unique().flatten()
+    print(attributes) 
+    #tree = ID3(train_df, train_df.columns[:-1])
+    tree = ID3(train_df, attributes)
     
 
-    #print(str(tree))
+    print(str(tree))
     correct,  incorrect = test_data(tree, test_file, columns)
     print("correct is ", correct)
     print("incorrect is ", incorrect)
