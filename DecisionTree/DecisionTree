@@ -17,29 +17,27 @@ class DecisionTree:
     ret = "\t"*level+repr(self.feature)+"\n"
     for child, value in self.children.items():
       
-      ret += str(child) + value.__str__(level+1)
+      ret +=  child + value.__str__(level+1)
     return ret
 
 
-def ID3(df, Attributes, max_depth,depth):
+def ID3(df, Attributes, split_funct, max_depth,depth=0):
   """
   construncts the desicion tree
   S is the set of examples
   Label is the target label ??
   Attributes is the set of measurred attributes
   """
-  # return if all the same label
-  
+  # return most common label if all have the same label or max depth is reached 
   if is_unique(df["label"]) or (int(depth) == int(max_depth)):
- 
     return DecisionTree(df['label'].value_counts().idxmax())
   # 1. Create  Root Node
   # 2. A = Attribute that best splits S
   # NOTE: do steps 2 then 1. 
-  gain = 0
+  gain = float('-inf')
   best_attribute = None
   for attribute in Attributes.keys():
-    poss_gain = information_gain(df, attribute, entropy)
+    poss_gain = information_gain(df, attribute, split_funct)
     if gain < poss_gain:
       gain = poss_gain
       best_attribute = attribute
@@ -64,7 +62,7 @@ def ID3(df, Attributes, max_depth,depth):
       #pass
       #attribute_df = attribute_df.drop(best_attribute)
       new_attributes = {key:val for key, val in attributes.items() if key != best_attribute}
-      root.add_branch(value, ID3(attribute_df, new_attributes, max_depth, depth+1))
+      root.add_branch(value, ID3(attribute_df, new_attributes, split_funct,max_depth, depth+1))
       #add to subtree ID3(S_v, Attributes -  {A}, Label)
    
   #  4. return root
@@ -157,8 +155,18 @@ if __name__ == "__main__":
     training_file = sys.argv[1]
     test_file = sys.argv[2]
     columns = sys.argv[3].split(",")
-    split_funct = sys.argv[4]
+    split_funct_str = sys.argv[4]
     max_depth = sys.argv[5]
+    split_funct = None
+    if split_funct_str == "Information_Gain":
+      split_funct = entropy
+    elif split_funct_str =="Majority_Error":
+      split_funct = majority_error
+    elif split_funct_str ==  "Gini_Index":
+      split_funct = gini_index
+    else:
+      print("enter a valid function")
+      exit(1)
 
     train_df =  get_training_data(sys.argv[1], columns)
     #todo make a df of attributes with unique values so we can  created better trees
@@ -166,9 +174,9 @@ if __name__ == "__main__":
     attributes = {}
     for a in columns[:-1]:
       attributes[a] = train_df[a].unique().flatten()
-    print(attributes) 
+    #print(attributes) 
     #tree = ID3(train_df, train_df.columns[:-1])
-    tree = ID3(train_df, attributes, max_depth, 0)
+    tree = ID3(train_df, attributes, split_funct ,max_depth)
     
 
     print(str(tree))
