@@ -17,7 +17,7 @@ class DecisionTree:
     ret = "\t"*level+repr(self.feature)+"\n"
     for child, value in self.children.items():
       
-      ret +=  child + value.__str__(level+1)
+      ret +=  str(child) + value.__str__(level+1)
     return ret
 
 
@@ -45,7 +45,6 @@ def ID3(df, Attributes, split_funct, max_depth,depth=0):
   root = DecisionTree(best_attribute)
   # 3. for each v that A can take
   all_values = df[best_attribute].unique()
-  # print(all_values)
   for value in Attributes[best_attribute]:
     # a. add new branch to the  tree  A=v
     root.add_branch(value,  None)
@@ -54,16 +53,13 @@ def ID3(df, Attributes, split_funct, max_depth,depth=0):
       # do the where remove the column
     # c. if S_v is empty  
     if attribute_df.empty:
-      # i think
-      root.add_branch(value, DecisionTree(df['label'].value_counts().idxmax()))
       # add leaf node with most common value of label
-    # d. else
+      root.add_branch(value, DecisionTree(df['label'].value_counts().idxmax()))
     else:
-      #pass
-      #attribute_df = attribute_df.drop(best_attribute)
+      #add to subtree
       new_attributes = {key:val for key, val in attributes.items() if key != best_attribute}
       root.add_branch(value, ID3(attribute_df, new_attributes, split_funct,max_depth, depth+1))
-      #add to subtree ID3(S_v, Attributes -  {A}, Label)
+      
    
   #  4. return root
   return root
@@ -114,12 +110,40 @@ def majority_error(df):
   return (total - max)/total, total
 
 def get_training_data(file_path, columns):
-  train_df = pandas.read_csv(file_path, names=columns)
+  train_df = pandas.read_csv(file_path, names=columns, index_col=False)
+ 
+  for column in columns:
+    #numeric take median
+    # and  replace with -  for less then 
+    # and replace with  + for greater
+    if column.endswith('(num)'):
+      #print(column)
+      median = train_df[column].median()
+      train_df[column] = train_df[column].apply(lambda x: "+" if x >= median else '-')
+  #print(train_df)
   return train_df
+
+def read_columns(file_path):
+  with open(file_path, 'r') as file:
+    columns = []
+    for line in file:
+      columnsInLine = line.strip().split(",")
+      columns += columnsInLine
+    return columns
 
 def test_data(tree, test_file,  columns):
   correct, incorrect = 0, 0
-  test_df = pandas.read_csv(test_file, names=columns)
+  test_df = pandas.read_csv(test_file, names=columns, index_col=False)
+  # also need to do  the median converstion here
+  for column in columns:
+    #numeric take median
+    # and  replace with -  for less then 
+    # and replace with  + for greater
+    if column.endswith('(num)'):
+      #print(column)
+      median = test_df[column].median()
+      test_df[column] = test_df[column].apply(lambda x: "+" if x >= median else '-')
+
   for index, row in test_df.iterrows():
     if process_row(row, tree):
       correct  +=  1
@@ -131,13 +155,9 @@ def test_data(tree, test_file,  columns):
 def process_row(row, tree):
   feature = tree.feature
 
-  if tree.children:
-    if row[feature] in tree.children.keys():
-      return process_row(row, tree.children[row[feature]])
-    else: 
-      # return most common label in case of this maybe?
-      print("not cool")
-      return False
+  if tree.children and row[feature] in tree.children.keys():
+    return process_row(row, tree.children[row[feature]])
+    
   else:
     #leaf node
     return feature == row['label']
@@ -147,14 +167,18 @@ def is_unique(s):
   a = s.to_numpy() # s.values (pandas<0.24)
   return (a[0] == a).all()
 
+
+
 if __name__ == "__main__":
   # argv will likely  look  like Train.csv Test.csv [labels] split_function max depth
   # or probably Train.csv Test.csv [column names] split_function max depth
   # i'd just love some properly formated data but nope.
+  # use a * to specify numeric. 
   if len(sys.argv) >= 2:
     training_file = sys.argv[1]
     test_file = sys.argv[2]
-    columns = sys.argv[3].split(",")
+    columns = read_columns(sys.argv[3])
+    print(columns)
     split_funct_str = sys.argv[4]
     max_depth = sys.argv[5]
     split_funct = None
@@ -173,15 +197,18 @@ if __name__ == "__main__":
     # attribute_df = train_df.apply(lambda col: col.unique())
     attributes = {}
     for a in columns[:-1]:
+      #print(a)
       attributes[a] = train_df[a].unique().flatten()
     #print(attributes) 
     #tree = ID3(train_df, train_df.columns[:-1])
     tree = ID3(train_df, attributes, split_funct ,max_depth)
     
 
-    print(str(tree))
+    # print(str(tree))
     correct,  incorrect = test_data(tree, test_file, columns)
     print("correct is ", correct)
     print("incorrect is ", incorrect)
+    error = (incorrect)/(correct + incorrect)
+    print("error is ",  error)
   else: 
     print("no data given")
