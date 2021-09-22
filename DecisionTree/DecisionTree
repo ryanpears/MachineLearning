@@ -109,6 +109,7 @@ def majority_error(df):
   max = allLabels.max()
   return (total - max)/total, total
 
+
 def get_training_data(file_path, columns):
   train_df = pandas.read_csv(file_path, names=columns, index_col=False)
  
@@ -117,10 +118,14 @@ def get_training_data(file_path, columns):
     # and  replace with -  for less then 
     # and replace with  + for greater
     if column.endswith('(num)'):
-      #print(column)
       median = train_df[column].median()
       train_df[column] = train_df[column].apply(lambda x: "+" if x >= median else '-')
-  #print(train_df)
+  
+  # for unknown as most common value in df
+  for column in columns:
+    mostcommon = train_df[column].value_counts().idxmax()
+    train_df[column] = train_df[column].apply(lambda x: mostcommon if x == "unknown"  else x)
+
   return train_df
 
 def read_columns(file_path):
@@ -140,9 +145,13 @@ def test_data(tree, test_file,  columns):
     # and  replace with -  for less then 
     # and replace with  + for greater
     if column.endswith('(num)'):
-      #print(column)
       median = test_df[column].median()
       test_df[column] = test_df[column].apply(lambda x: "+" if x >= median else '-')
+
+  # for unknown as most common value in df
+  for column in columns:
+    mostcommon = test_df[column].value_counts().idxmax()
+    test_df[column] = test_df[column].apply(lambda x: mostcommon if x == "unknown"  else x)
 
   for index, row in test_df.iterrows():
     if process_row(row, tree):
@@ -164,9 +173,8 @@ def process_row(row, tree):
   
 
 def is_unique(s):
-  a = s.to_numpy() # s.values (pandas<0.24)
+  a = s.to_numpy() 
   return (a[0] == a).all()
-
 
 
 if __name__ == "__main__":
@@ -178,9 +186,9 @@ if __name__ == "__main__":
     training_file = sys.argv[1]
     test_file = sys.argv[2]
     columns = read_columns(sys.argv[3])
-    print(columns)
     split_funct_str = sys.argv[4]
     max_depth = sys.argv[5]
+
     split_funct = None
     if split_funct_str == "Information_Gain":
       split_funct = entropy
@@ -193,18 +201,16 @@ if __name__ == "__main__":
       exit(1)
 
     train_df =  get_training_data(sys.argv[1], columns)
-    #todo make a df of attributes with unique values so we can  created better trees
-    # attribute_df = train_df.apply(lambda col: col.unique())
+    
     attributes = {}
     for a in columns[:-1]:
-      #print(a)
+      
       attributes[a] = train_df[a].unique().flatten()
-    #print(attributes) 
-    #tree = ID3(train_df, train_df.columns[:-1])
+    
     tree = ID3(train_df, attributes, split_funct ,max_depth)
     
 
-    # print(str(tree))
+    
     correct,  incorrect = test_data(tree, test_file, columns)
     print("correct is ", correct)
     print("incorrect is ", incorrect)
