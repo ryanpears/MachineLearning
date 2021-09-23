@@ -2,6 +2,8 @@ import sys
 import numpy
 import pandas
 
+LABEL  = ""
+
 class DecisionTree:
   def __init__(self, feature):
     self.feature =  feature
@@ -29,8 +31,8 @@ def ID3(df, Attributes, split_funct, max_depth,depth=0):
   Attributes is the set of measurred attributes
   """
   # return most common label if all have the same label or max depth is reached 
-  if is_unique(df["label"]) or (int(depth) == int(max_depth)):
-    return DecisionTree(df['label'].value_counts().idxmax())
+  if is_unique(df[LABEL]) or (int(depth) >= int(max_depth)):
+    return DecisionTree(df[LABEL].value_counts().idxmax())
   # 1. Create  Root Node
   # 2. A = Attribute that best splits S
   # NOTE: do steps 2 then 1. 
@@ -45,7 +47,7 @@ def ID3(df, Attributes, split_funct, max_depth,depth=0):
   root = DecisionTree(best_attribute)
   # 3. for each v that A can take
   all_values = df[best_attribute].unique()
-  for value in Attributes[best_attribute]:
+  for value in all_values:
     # a. add new branch to the  tree  A=v
     root.add_branch(value,  None)
     # let  S_v be  subset S where  A = v
@@ -54,7 +56,7 @@ def ID3(df, Attributes, split_funct, max_depth,depth=0):
     # c. if S_v is empty  
     if attribute_df.empty:
       # add leaf node with most common value of label
-      root.add_branch(value, DecisionTree(df['label'].value_counts().idxmax()))
+      root.add_branch(value, DecisionTree(df[LABEL].value_counts().idxmax()))
     else:
       #add to subtree
       new_attributes = {key:val for key, val in attributes.items() if key != best_attribute}
@@ -80,7 +82,7 @@ def entropy(df):
   I think this is ok works on test1
   """
   set_entropy = 0
-  allLabels = df.groupby("label")["label"].count()
+  allLabels = df.groupby(LABEL)[LABEL].count()
   total  = allLabels.sum()
   
   for index, row in allLabels.items():
@@ -92,7 +94,7 @@ def gini_index(df):
   """
   calculates  the gini index
   """
-  allLabels = df.groupby("label")["label"].count()
+  allLabels = df.groupby(LABEL)[LABEL].count()
   total  = allLabels.sum()
   squares = 0
   for index, row in allLabels.items():
@@ -104,7 +106,7 @@ def majority_error(df):
   """
   calculated the me
   """
-  allLabels = df.groupby("label")["label"].count()
+  allLabels = df.groupby(LABEL)[LABEL].count()
   total = allLabels.sum()
   max = allLabels.max()
   return (total - max)/total, total
@@ -169,7 +171,7 @@ def process_row(row, tree):
     
   else:
     #leaf node
-    return feature == row['label']
+    return feature == row[LABEL]
   
 
 def is_unique(s):
@@ -186,6 +188,7 @@ if __name__ == "__main__":
     training_file = sys.argv[1]
     test_file = sys.argv[2]
     columns = read_columns(sys.argv[3])
+    LABEL = columns[-1]
     split_funct_str = sys.argv[4]
     max_depth = sys.argv[5]
 
