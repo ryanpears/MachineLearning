@@ -3,6 +3,7 @@ import numpy
 import pandas
 
 LABEL  = ""
+UNKNOWNTREATMENT = False
 
 class DecisionTree:
   def __init__(self, feature):
@@ -124,9 +125,10 @@ def get_training_data(file_path, columns):
       train_df[column] = train_df[column].apply(lambda x: "+" if x >= median else '-')
   
   # for unknown as most common value in df
-  for column in columns:
-    mostcommon = train_df[column].value_counts().idxmax()
-    train_df[column] = train_df[column].apply(lambda x: mostcommon if x == "unknown"  else x)
+  if UNKNOWNTREATMENT:
+    for column in columns:
+      mostcommon = train_df[column].value_counts().idxmax()
+      train_df[column] = train_df[column].apply(lambda x: mostcommon if x == "unknown"  else x)
 
   return train_df
 
@@ -151,9 +153,10 @@ def test_data(tree, test_file,  columns):
       test_df[column] = test_df[column].apply(lambda x: "+" if x >= median else '-')
 
   # for unknown as most common value in df
-  for column in columns:
-    mostcommon = test_df[column].value_counts().idxmax()
-    test_df[column] = test_df[column].apply(lambda x: mostcommon if x == "unknown"  else x)
+  if UNKNOWNTREATMENT:
+    for column in columns:
+      mostcommon = test_df[column].value_counts().idxmax()
+      test_df[column] = test_df[column].apply(lambda x: mostcommon if x == "unknown"  else x)
 
   for index, row in test_df.iterrows():
     if process_row(row, tree):
@@ -191,6 +194,7 @@ if __name__ == "__main__":
     LABEL = columns[-1]
     split_funct_str = sys.argv[4]
     max_depth = sys.argv[5]
+    UNKNOWNTREATMENT = sys.argv[6]
 
     split_funct = None
     if split_funct_str == "Information_Gain":

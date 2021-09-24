@@ -1,0 +1,1 @@
+Buying,maint,doors,persons,lug_boot,safety,label
