@@ -154,6 +154,7 @@ def test_data(tree, test_file,  columns):
 
   # for unknown as most common value in df
   if UNKNOWNTREATMENT:
+    print("cool")
     for column in columns:
       mostcommon = test_df[column].value_counts().idxmax()
       test_df[column] = test_df[column].apply(lambda x: mostcommon if x == "unknown"  else x)
@@ -194,7 +195,8 @@ if __name__ == "__main__":
     LABEL = columns[-1]
     split_funct_str = sys.argv[4]
     max_depth = sys.argv[5]
-    UNKNOWNTREATMENT = sys.argv[6]
+    UNKNOWNTREATMENT = sys.argv[6] == 'True'
+    print(UNKNOWNTREATMENT)
 
     split_funct = None
     if split_funct_str == "Information_Gain":
@@ -215,7 +217,7 @@ if __name__ == "__main__":
       attributes[a] = train_df[a].unique().flatten()
     
     tree = ID3(train_df, attributes, split_funct ,max_depth)
-    
+    print(tree)
 
     
     correct,  incorrect = test_data(tree, test_file, columns)
