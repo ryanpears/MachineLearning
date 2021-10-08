@@ -1,0 +1,1 @@
+age(num),job,marital,education,default,balance(num),housing,loan,contact,day(num),month,duration(num),campaign(num),pdays(num),previous(num),poutcome,label

@@ -24,12 +24,14 @@ class DecisionTree:
     return ret
 
 
-def ID3(df, Attributes, split_funct, max_depth,depth=0):
+def ID3(df, Attributes, split_funct, max_depth, example_weights=None, depth=0):
   """
   construncts the desicion tree
   S is the set of examples
   Label is the target label ??
   Attributes is the set of measurred attributes
+  example_weights are going the be a array or series of  
+  weights for each example. not sure how IG will then split.
   """
   # return most common label if all have the same label or max depth is reached 
   if is_unique(df[LABEL]) or (int(depth) >= int(max_depth)):
@@ -40,7 +42,7 @@ def ID3(df, Attributes, split_funct, max_depth,depth=0):
   gain = float('-inf')
   best_attribute = None
   for attribute in Attributes.keys():
-    poss_gain = information_gain(df, attribute, split_funct)
+    poss_gain = information_gain(df, attribute, split_funct, example_weights)
     if gain < poss_gain:
       gain = poss_gain
       best_attribute = attribute
@@ -71,25 +73,47 @@ def information_gain(df, attribute, splitFunction):
   total_split_value, total_values = splitFunction(df)
   allAttributes= df.groupby(attribute)[attribute].count()
   total_attribute_split = 0
+
   for index, row in allAttributes.items():
-    
+  
     attribute_split, count = splitFunction(df.loc[df[attribute] == index])
     total_attribute_split += (count / total_values) * attribute_split
+    
+
   return (total_split_value - total_attribute_split)
 
 def entropy(df):
   """
   returns the entropy of a set
   I think this is ok works on test1
+  
   """
   set_entropy = 0
+  
   allLabels = df.groupby(LABEL)[LABEL].count()
-  total  = allLabels.sum()
+
+  total = allLabels.sum()
   
   for index, row in allLabels.items():
     probOfLabel = row/total
     set_entropy -= probOfLabel * numpy.log2(probOfLabel)
   return set_entropy, total
+
+def weighted_entropy(df):
+  """
+  entropy but maybe  weighted seriously not  sure wtf I  should be  doing
+  """
+  # if this works I'll become religious
+  set_entropy = 0
+  label_vals = df[LABEL].unique()
+  total = 0
+  for index, value in label_vals.items():
+    #maybe fuck if I know
+    labelWeightedProb = df.loc[df['weight'] == value].sum()
+    total += df.loc[df['weight'] == value].count()
+    set_entropy -= labelWeightedProb *numpy.log2(labelWeightedProb)
+  return set_entropy, total
+
 
 def gini_index(df):
   """
@@ -154,7 +178,6 @@ def test_data(tree, test_file,  columns):
 
   # for unknown as most common value in df
   if UNKNOWNTREATMENT:
-    print("cool")
     for column in columns:
       mostcommon = test_df[column].value_counts().idxmax()
       test_df[column] = test_df[column].apply(lambda x: mostcommon if x == "unknown"  else x)
@@ -196,7 +219,6 @@ if __name__ == "__main__":
     split_funct_str = sys.argv[4]
     max_depth = sys.argv[5]
     UNKNOWNTREATMENT = sys.argv[6] == 'True'
-    print(UNKNOWNTREATMENT)
 
     split_funct = None
     if split_funct_str == "Information_Gain":
@@ -217,8 +239,6 @@ if __name__ == "__main__":
       attributes[a] = train_df[a].unique().flatten()
     
     tree = ID3(train_df, attributes, split_funct ,max_depth)
-    print(tree)
-
     
     correct,  incorrect = test_data(tree, test_file, columns)
     print("correct is ", correct)
