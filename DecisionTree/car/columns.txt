@@ -1,1 +1,1 @@
-Buying,maint,doors,persons,lug_boot,safety,label
+O,T,H,W,P

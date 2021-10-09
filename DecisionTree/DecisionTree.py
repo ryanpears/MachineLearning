@@ -1,6 +1,7 @@
 import sys
 import numpy
 import pandas
+import random
 
 LABEL  = ""
 UNKNOWNTREATMENT = False
@@ -23,8 +24,11 @@ class DecisionTree:
       ret +=  str(child) + value.__str__(level+1)
     return ret
 
+def set_label(l):
+  global LABEL
+  LABEL = l
 
-def ID3(df, Attributes, split_funct, max_depth, example_weights=None, depth=0):
+def ID3(df, Attributes, split_funct, max_depth=None, depth=0):
   """
   construncts the desicion tree
   S is the set of examples
@@ -33,22 +37,33 @@ def ID3(df, Attributes, split_funct, max_depth, example_weights=None, depth=0):
   example_weights are going the be a array or series of  
   weights for each example. not sure how IG will then split.
   """
+  if max_depth == None:
+    max_depth = len(Attributes)
   # return most common label if all have the same label or max depth is reached 
   if is_unique(df[LABEL]) or (int(depth) >= int(max_depth)):
-    return DecisionTree(df[LABEL].value_counts().idxmax())
+    value = int(df[LABEL].value_counts().idxmax())
+    assert (value == -1 or value == 1)
+    return DecisionTree(value)
   # 1. Create  Root Node
   # 2. A = Attribute that best splits S
   # NOTE: do steps 2 then 1. 
   gain = float('-inf')
   best_attribute = None
+
   for attribute in Attributes.keys():
-    poss_gain = information_gain(df, attribute, split_funct, example_weights)
-    if gain < poss_gain:
+    if attribute == LABEL: continue
+    poss_gain = information_gain(df, attribute, split_funct)
+    # print(attribute, poss_gain)
+    assert poss_gain >= -0.01, f"{poss_gain}, {attribute}"
+    if gain <= poss_gain:
       gain = poss_gain
       best_attribute = attribute
- 
   root = DecisionTree(best_attribute)
   # 3. for each v that A can take
+
+
+  # print(f"spliting on {best_attribute}")
+  
   all_values = df[best_attribute].unique()
   for value in all_values:
     # a. add new branch to the  tree  A=v
@@ -62,7 +77,7 @@ def ID3(df, Attributes, split_funct, max_depth, example_weights=None, depth=0):
       root.add_branch(value, DecisionTree(df[LABEL].value_counts().idxmax()))
     else:
       #add to subtree
-      new_attributes = {key:val for key, val in attributes.items() if key != best_attribute}
+      new_attributes = {key:val for key, val in Attributes.items() if key != best_attribute}
       root.add_branch(value, ID3(attribute_df, new_attributes, split_funct,max_depth, depth+1))
       
    
@@ -71,15 +86,20 @@ def ID3(df, Attributes, split_funct, max_depth, example_weights=None, depth=0):
   
 def information_gain(df, attribute, splitFunction):
   total_split_value, total_values = splitFunction(df)
+  
   allAttributes= df.groupby(attribute)[attribute].count()
   total_attribute_split = 0
 
+  # print(attribute)
   for index, row in allAttributes.items():
-  
+    # print(index)
     attribute_split, count = splitFunction(df.loc[df[attribute] == index])
+    # print(f"({count} / {total_values}) * {attribute_split}")
     total_attribute_split += (count / total_values) * attribute_split
     
-
+  # print(total_split_value)
+  # print(total_attribute_split)
+  # print(total_split_value - total_attribute_split)
   return (total_split_value - total_attribute_split)
 
 def entropy(df):
@@ -95,23 +115,42 @@ def entropy(df):
   total = allLabels.sum()
   
   for index, row in allLabels.items():
+    
     probOfLabel = row/total
     set_entropy -= probOfLabel * numpy.log2(probOfLabel)
+  
   return set_entropy, total
 
 def weighted_entropy(df):
   """
   entropy but maybe  weighted seriously not  sure wtf I  should be  doing
+
   """
-  # if this works I'll become religious
+  #I hinestly feel decently confident about this
   set_entropy = 0
+  # yest
+  total_bs = 0
   label_vals = df[LABEL].unique()
-  total = 0
-  for index, value in label_vals.items():
-    #maybe fuck if I know
-    labelWeightedProb = df.loc[df['weight'] == value].sum()
-    total += df.loc[df['weight'] == value].count()
-    set_entropy -= labelWeightedProb *numpy.log2(labelWeightedProb)
+  total = df['weight'].sum()
+  
+  for value in label_vals:
+    # this only  works for the first round when all weight sum to 1
+    # print(value)
+    labelWeightedProb = df.loc[df[LABEL] == value, 'weight'].sum()
+    # print(labelWeightedProb)
+    assert labelWeightedProb >=0 and labelWeightedProb <=1
+    total_bs += labelWeightedProb/total
+    # maybe need to normalize?? but that doesn't feel right
+    set_entropy -= (labelWeightedProb/total) * numpy.log2(labelWeightedProb/total)
+  
+
+  # set_entropy = 0
+  
+  
+   
+  # for binary I can do this
+  # print(set_entropy)
+  assert(set_entropy >= 0)
   return set_entropy, total
 
 
