@@ -28,7 +28,7 @@ def set_label(l):
   global LABEL
   LABEL = l
 
-def ID3(df, Attributes, split_funct, max_depth=None, depth=0):
+def ID3(df, Attributes, split_funct, max_depth=None, depth=0, is_random=False, random_sample=1):
   """
   construncts the desicion tree
   S is the set of examples
@@ -40,7 +40,7 @@ def ID3(df, Attributes, split_funct, max_depth=None, depth=0):
   if max_depth == None:
     max_depth = len(Attributes)
   # return most common label if all have the same label or max depth is reached 
-  if is_unique(df[LABEL]) or (int(depth) >= int(max_depth)):
+  if is_unique(df[LABEL]) or (int(depth) >= int(max_depth)) or random_sample > len(Attributes):
     value = int(df[LABEL].value_counts().idxmax())
     assert (value == -1 or value == 1)
     return DecisionTree(value)
@@ -49,11 +49,23 @@ def ID3(df, Attributes, split_funct, max_depth=None, depth=0):
   # NOTE: do steps 2 then 1. 
   gain = float('-inf')
   best_attribute = None
+  split_attributes = {}
+  if is_random:
+   # select a feature subset
+    sampled_attributes = random.sample(Attributes.items(), random_sample)
+    # turn into a dictionary
+    for a in sampled_attributes:
+      
+      split_attributes[a[0]] = a[1]
+      del Attributes[a[0]]
+    # print("split attributes is ", split_attributes)
+  else:
+    split_attributes = Attributes
 
-  for attribute in Attributes.keys():
+
+  for attribute in split_attributes.keys():
     if attribute == LABEL: continue
     poss_gain = information_gain(df, attribute, split_funct)
-    # print(attribute, poss_gain)
     assert poss_gain >= -0.01, f"{poss_gain}, {attribute}"
     if gain <= poss_gain:
       gain = poss_gain
@@ -61,8 +73,6 @@ def ID3(df, Attributes, split_funct, max_depth=None, depth=0):
   root = DecisionTree(best_attribute)
   # 3. for each v that A can take
 
-
-  # print(f"spliting on {best_attribute}")
   
   all_values = df[best_attribute].unique()
   for value in all_values:
@@ -78,7 +88,7 @@ def ID3(df, Attributes, split_funct, max_depth=None, depth=0):
     else:
       #add to subtree
       new_attributes = {key:val for key, val in Attributes.items() if key != best_attribute}
-      root.add_branch(value, ID3(attribute_df, new_attributes, split_funct,max_depth, depth+1))
+      root.add_branch(value, ID3(attribute_df, new_attributes, split_funct,max_depth, depth+1, is_random, random_sample))
       
    
   #  4. return root

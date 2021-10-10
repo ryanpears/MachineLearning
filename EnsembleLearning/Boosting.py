@@ -10,6 +10,9 @@ import numpy
 from DecisionTree import DecisionTree, weighted_entropy, entropy, ID3, get_training_data, read_columns, set_label, process_row
 
 LABEL = 'label'
+# likely use
+LAGGING= [1, 5, 10, 25, 50, 100, 200, 300, 400, 500]
+
 
 def calculate_error(stump, df):
   # i think this is right
@@ -54,12 +57,10 @@ def AdaBoost(df, attributes, t):
   stumps = []
   
   for i in range(0, t):
-   
     # make a decsion tree (h_t) of depth 1 
     stumps.append(ID3(df, attributes, weighted_entropy, 1))
     # error_t is the error on the training data
     e_t = calculate_error(stumps[i], df)
-    print("error os ", e_t)
     #assert e_t < 0.6
     
     # so my error is the same????
@@ -71,11 +72,8 @@ def AdaBoost(df, attributes, t):
     D = []
     Z = 0
     for index, row in df.iterrows():
-      alpha = alphas[i]
-      stump_result = use_stump(stumps[i], row)
-      # print("alpha  is ", alpha)
-      # print("stump resulted", stump_result)
-      value = numpy.exp(-alphas[i] * row[LABEL] * use_stump(stumps[i], row))
+      #NOTE: I think this is correct but since the error is near 50% alpha is about 0 and updates to weight are minimal
+      value = row['weight'] * numpy.exp(-alphas[i] * row[LABEL] * use_stump(stumps[i], row))
       #value = random.random()* 40
       Z += value
       D.append(value)
@@ -86,7 +84,7 @@ def AdaBoost(df, attributes, t):
 
     df['weight'] = D
     # this repetes in a loop?
-    print(df["weight"])
+    
     
   # final is H_final(x) = sgn(sum_t alpha_t h_t(x))
   # really  unsure how to return a  function like this just returning pieces
@@ -107,23 +105,35 @@ def bagging(df, attributes, t, sample_size):
   #return votes and Trees
   return alphas, C 
 
-def random_forest(df, attributes, t, sample_size):
+def random_forest(df, attributes, t, sample_size, attribute_sample_size):
+  C = []
+  alphas = []
   for i in range(0, t):
     # draw m smaples uniformly with replacement
     sample_df = df.sample(n=sample_size, replace=True)
-    # learn a 
-  return
+    # learn a tree C_t need to pass a copy
+    C.append(ID3(sample_df, attributes.copy(), entropy, is_random=True, random_sample=attribute_sample_size))
+    
+    #calculate it's vote
+    e_t = calculate_error(C[i], df)
+    # print(e_t)
+    alphas.append(alpha_calc(e_t))
+  assert len(alphas) == len(C)
+  return  alphas, C
 
-def random_tree_learn
-
-def experiemnt3(training_df, attributes, test_df):
+def error_experiment(training_df, attributes, test_df, function):
   bagged_learners = []
-  #TODO add extra 0
-  for i in range(0, 100):
+  #TODO make use on random and bagged
+  for i in range(0, 10):
     print(f"on round {i}")
     sample = training_df.sample(n=1000, replace=False)
-    
-    alphas_i, trees_i = bagging(sample, attributes, 500, 100)
+    if function == 'bagged':
+      alphas_i, trees_i = bagging(sample, attributes, 50, 10)
+    elif function == 'random':
+      alphas_i, trees_i = random_forest(sample, attributes, 50, 10, 4)
+    else:
+      print("not a know function")
+      return 
     bagged_learners.append((alphas_i, trees_i))
   single_trees = []
   # get first tree in each
@@ -215,6 +225,56 @@ def sample_variance_bais_single(row, trees):
   assert sample_variance >= 0, f"{sample_variance}, {average}, {p}"
   return sample_variance, bais
 
+
+def model_tests(train_df, test_df, attributes, function, random_sample_size=1):
+  # train a bagged of 500
+  if function == 'boosted':
+    alphas, trees = AdaBoost(train_df, attributes, 500)
+  elif function == 'bagged':
+    alphas, trees = bagging(train_df, attributes, 500, 100)
+  elif function == 'random':
+    alphas, trees = random_forest(train_df, attributes, 500, 100, random_sample_size)
+  else:
+    print("not a known function")
+    return
+  print("done training")
+  # we can now test for every length
+  print("i, train_error, test_error")
+  test_row_result = {}
+  train_row_result = {}
+  for i in range(0, 500):
+    # a = alphas[:i]
+    # t = trees[:i]
+    train_correct, train_incorrect = 0, 0
+    for index, row in train_df.iterrows():
+      if not index in train_row_result.keys():
+        train_row_result[index] = 0
+      train_row_result[index] += alphas[i] * use_stump(trees[i], row) 
+      sgn = 1 if train_row_result[index] > 0 else -1
+      if row[LABEL] == sgn:
+        train_correct += 1
+      else:
+        train_incorrect += 1
+    # print(f"at iteration {i} correct is {train_correct} incorrect is {train_incorrect}")
+
+    test_correct, test_incorrect = 0, 0
+    for index, row in test_df.iterrows():
+      if not index in test_row_result.keys():
+        test_row_result[index] = 0
+      test_row_result[index] += alphas[i] * use_stump(trees[i], row) 
+      sgn = 1 if test_row_result[index] > 0 else -1
+      if row[LABEL] == sgn:
+        test_correct += 1
+      else:
+        test_incorrect += 1
+    # print(f"at iteration {i} correct is {train_correct} incorrect is {train_incorrect}")
+    # print(f"at iteration {i} correct is {test_correct} incorrect is {test_incorrect}")
+    train_error = train_incorrect/(train_correct  + train_incorrect)
+    test_error = test_incorrect/(test_correct  + test_incorrect)
+    print(f"{i+1},{train_error},{test_error}")
+
+    
+
 if __name__ == "__main__":
   #want to just take in train.csv test.csv columns.txt
   train_csv = sys.argv[1]
@@ -236,10 +296,19 @@ if __name__ == "__main__":
   attributes = {}
   for a in columns[:-1]:
     attributes[a] = train_df[a].unique().flatten()
-  print("ADAboost")
-  # AdaBoost(train_df, attributes, 1)
-  print("bagging")
-  # bagging(train_df, attributes, 10, 100)
-  experiemnt3(train_df, attributes, test_df)
+  # print("ADAboost")
+  
+  # model_tests(train_df, test_df, attributes, 'boosted')
+  # print("bagging")
+  
+  # model_tests(train_df, test_df, attributes, 'bagged')
+  # error_experiment(train_df, attributes, test_df, "bagged")
+  # # running this
+  # print("random forest")
+  # model_tests(train_df, test_df, attributes, 'random', 2)
+  # model_tests(train_df, test_df, attributes, 'random', 4)
+  # model_tests(train_df, test_df, attributes, 'random', 6)
+  error_experiment(train_df, attributes, test_df, "random")
+  
   
   
