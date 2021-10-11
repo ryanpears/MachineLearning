@@ -124,13 +124,13 @@ def random_forest(df, attributes, t, sample_size, attribute_sample_size):
 def error_experiment(training_df, attributes, test_df, function):
   bagged_learners = []
   #TODO make use on random and bagged
-  for i in range(0, 10):
+  for i in range(0, 100):
     print(f"on round {i}")
     sample = training_df.sample(n=1000, replace=False)
     if function == 'bagged':
-      alphas_i, trees_i = bagging(sample, attributes, 50, 10)
+      alphas_i, trees_i = bagging(sample, attributes, 500, 100)
     elif function == 'random':
-      alphas_i, trees_i = random_forest(sample, attributes, 50, 10, 4)
+      alphas_i, trees_i = random_forest(sample, attributes, 500, 100, 4)
     else:
       print("not a know function")
       return 
@@ -296,18 +296,21 @@ if __name__ == "__main__":
   attributes = {}
   for a in columns[:-1]:
     attributes[a] = train_df[a].unique().flatten()
-  # print("ADAboost")
+  print("ADAboost")
+  model_tests(train_df, test_df, attributes, 'boosted')
+  print("bagging")
   
-  # model_tests(train_df, test_df, attributes, 'boosted')
-  # print("bagging")
-  
-  # model_tests(train_df, test_df, attributes, 'bagged')
-  # error_experiment(train_df, attributes, test_df, "bagged")
-  # # running this
-  # print("random forest")
-  # model_tests(train_df, test_df, attributes, 'random', 2)
-  # model_tests(train_df, test_df, attributes, 'random', 4)
-  # model_tests(train_df, test_df, attributes, 'random', 6)
+  model_tests(train_df, test_df, attributes, 'bagged')
+  print("bagging bias and variance  experiment")
+  error_experiment(train_df, attributes, test_df, "bagged")
+
+  print("random forest attribute_sample_size = 2")
+  model_tests(train_df, test_df, attributes, 'random', 2)
+  print("random forest attribute_sample_size = 4")
+  model_tests(train_df, test_df, attributes, 'random', 4)
+  print("random forest attribute_sample_size = 6")
+  model_tests(train_df, test_df, attributes, 'random', 6)
+  print("random forest bias and variance  experiment")
   error_experiment(train_df, attributes, test_df, "random")
   
   
