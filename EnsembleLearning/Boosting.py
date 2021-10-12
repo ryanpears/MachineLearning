@@ -1,13 +1,14 @@
 import random
 import sys
-
+import os
+import pandas
+import numpy
 from numpy.core.fromnumeric import prod
 from numpy.lib.function_base import average, corrcoef
-# TODO use a relative  path
-sys.path.insert(0, "/Users/ryanpearson/Documents/CollegeHomework/Fall2021/MachineLearning/MachineLearning/DecisionTree")
-import numpy
 
-from DecisionTree import DecisionTree, weighted_entropy, entropy, ID3, get_training_data, read_columns, set_label, process_row
+
+sys.path.append(os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'DecisionTree')))
+from DecisionTree import DecisionTree, weighted_entropy, entropy, ID3, get_training_data, read_columns, set_label
 
 LABEL = 'label'
 # likely use
@@ -48,33 +49,26 @@ def use_voted_stumps(alphas, stumps, example):
 
 
 def alpha_calc(error):
-  return 0.5 * numpy.log((1-error)/error)
+  return numpy.log((1-error)/error) * 0.5
 
 def AdaBoost(df, attributes, t):
-  #TODO
-  # for a round t
   alphas = []
   stumps = []
-  
+
   for i in range(0, t):
     # make a decsion tree (h_t) of depth 1 
     stumps.append(ID3(df, attributes, weighted_entropy, 1))
     # error_t is the error on the training data
     e_t = calculate_error(stumps[i], df)
-    #assert e_t < 0.6
-    
-    # so my error is the same????
-    # calculate its vote  wack alpha_t fuck
+   
     alphas.append(alpha_calc(e_t))
+
     #this will be updating the weight column in df
-    
-    # D_t+1(i) = D_t(i) /Z_t (exp(-alpha_t y_i * h_t(x_i)))
     D = []
     Z = 0
     for index, row in df.iterrows():
       #NOTE: I think this is correct but since the error is near 50% alpha is about 0 and updates to weight are minimal
       value = row['weight'] * numpy.exp(-alphas[i] * row[LABEL] * use_stump(stumps[i], row))
-      #value = random.random()* 40
       Z += value
       D.append(value)
     
@@ -83,11 +77,9 @@ def AdaBoost(df, attributes, t):
       assert D[index] > 0
 
     df['weight'] = D
-    # this repetes in a loop?
     
     
   # final is H_final(x) = sgn(sum_t alpha_t h_t(x))
-  # really  unsure how to return a  function like this just returning pieces
   return alphas, stumps
 
 def bagging(df, attributes, t, sample_size):
@@ -273,45 +265,90 @@ def model_tests(train_df, test_df, attributes, function, random_sample_size=1):
     test_error = test_incorrect/(test_correct  + test_incorrect)
     print(f"{i+1},{train_error},{test_error}")
 
-    
+
+def get_training_data_with_header(file_path, columns):
+  train_df = pandas.read_csv(file_path, names=columns, index_col=0, skiprows=2)
+ 
+  for column in columns:
+    #numeric take median
+    # and  replace with -  for less then 
+    # and replace with  + for greater
+    if column.endswith('(num)'):
+      median = train_df[column].median()
+      train_df[column] = train_df[column].apply(lambda x: "+" if x >= median else '-')
+  train_df.index -= 1
+  return train_df
+
+  
 
 if __name__ == "__main__":
-  #want to just take in train.csv test.csv columns.txt
-  train_csv = sys.argv[1]
-  test_csv = sys.argv[2]
-  columns_txt = sys.argv[3]
-  columns = read_columns(columns_txt)
-  LABEL = columns[-1]
-  set_label(LABEL)
-  train_df =  get_training_data(sys.argv[1], columns)
-  test_df = get_training_data(sys.argv[2], columns)
-  rows_num = len(train_df)
+  if len(sys.argv) == 4:
+    #want to just take in train.csv test.csv columns.txt
+    train_csv = sys.argv[1]
+    test_csv = sys.argv[2]
+    columns_txt = sys.argv[3]
+    columns = read_columns(columns_txt)
+    LABEL = columns[-1]
+    set_label(LABEL)
+    train_df = get_training_data(train_csv, columns)
+    #train_df =  get_training_data_with_header(sys.argv[1], columns)
+    test_df = get_training_data(sys.argv[2], columns)
+    rows_num = len(train_df)
 
-  train_df['weight'] = 1/rows_num
-  train_df[LABEL] = train_df[LABEL].apply(lambda x: 1 if x == 'yes' else -1)
+    train_df['weight'] = 1/rows_num
+    train_df[LABEL] = train_df[LABEL].apply(lambda x: 1 if x == 'yes' else -1)
+    
+    print(train_df)
+    
+    test_df[LABEL] = test_df[LABEL].apply(lambda x: 1 if x == 'yes' else -1)
+    print(train_df)
+    
+    attributes = {}
+    for a in columns[:-1]:
+      attributes[a] = train_df[a].unique().flatten()
 
-  test_df[LABEL] = test_df[LABEL].apply(lambda x: 1 if x == 'yes' else -1)
-  print(train_df)
-  
-  attributes = {}
-  for a in columns[:-1]:
-    attributes[a] = train_df[a].unique().flatten()
-  print("ADAboost")
-  model_tests(train_df, test_df, attributes, 'boosted')
-  print("bagging")
-  
-  model_tests(train_df, test_df, attributes, 'bagged')
-  print("bagging bias and variance  experiment")
-  error_experiment(train_df, attributes, test_df, "bagged")
+    print("ADAboost")
+    model_tests(train_df, test_df, attributes, 'boosted')
+    print("bagging")
+    
+    model_tests(train_df, test_df, attributes, 'bagged')
+    print("bagging bias and variance  experiment")
+    error_experiment(train_df, attributes, test_df, "bagged")
 
-  print("random forest attribute_sample_size = 2")
-  model_tests(train_df, test_df, attributes, 'random', 2)
-  print("random forest attribute_sample_size = 4")
-  model_tests(train_df, test_df, attributes, 'random', 4)
-  print("random forest attribute_sample_size = 6")
-  model_tests(train_df, test_df, attributes, 'random', 6)
-  print("random forest bias and variance  experiment")
-  error_experiment(train_df, attributes, test_df, "random")
-  
-  
-  
+    print("random forest attribute_sample_size = 2")
+    model_tests(train_df, test_df, attributes, 'random', 2)
+    print("random forest attribute_sample_size = 4")
+    model_tests(train_df, test_df, attributes, 'random', 4)
+    print("random forest attribute_sample_size = 6")
+    model_tests(train_df, test_df, attributes, 'random', 6)
+    print("random forest bias and variance  experiment")
+    error_experiment(train_df, attributes, test_df, "random")
+  else:
+
+    train_csv = sys.argv[1]
+    columns_txt = sys.argv[2]
+    columns = read_columns(columns_txt)
+    LABEL = columns[-1]
+    set_label(LABEL)
+
+    train_df =  get_training_data_with_header(sys.argv[1], columns)
+    
+    train_df[LABEL] = train_df[LABEL].apply(lambda x: 1 if x == 1 else -1)
+    test_df = train_df[24000:]
+    train_df = train_df[:24000]
+
+    rows_num = len(train_df)
+    train_df['weight'] = 1/rows_num
+
+    attributes = {}
+    for a in columns[:-1]:
+      attributes[a] = train_df[a].unique().flatten()
+
+    print("ADAboost")
+    model_tests(train_df, test_df, attributes, 'boosted')
+
+    print("bagging")
+    model_tests(train_df, test_df, attributes, 'bagged')
+
+    print("random forest sample size = 4")
+    model_tests(train_df, test_df, attributes, 'random', 4)

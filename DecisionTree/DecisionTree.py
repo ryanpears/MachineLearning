@@ -62,18 +62,17 @@ def ID3(df, Attributes, split_funct, max_depth=None, depth=0, is_random=False, r
   else:
     split_attributes = Attributes
 
-
   for attribute in split_attributes.keys():
     if attribute == LABEL: continue
     poss_gain = information_gain(df, attribute, split_funct)
     assert poss_gain >= -0.01, f"{poss_gain}, {attribute}"
+    
     if gain <= poss_gain:
       gain = poss_gain
       best_attribute = attribute
   root = DecisionTree(best_attribute)
   # 3. for each v that A can take
-
-  
+ 
   all_values = df[best_attribute].unique()
   for value in all_values:
     # a. add new branch to the  tree  A=v
@@ -138,8 +137,6 @@ def weighted_entropy(df):
   """
   #I hinestly feel decently confident about this
   set_entropy = 0
-  # yest
-  total_bs = 0
   label_vals = df[LABEL].unique()
   total = df['weight'].sum()
   
@@ -149,17 +146,9 @@ def weighted_entropy(df):
     labelWeightedProb = df.loc[df[LABEL] == value, 'weight'].sum()
     # print(labelWeightedProb)
     assert labelWeightedProb >=0 and labelWeightedProb <=1
-    total_bs += labelWeightedProb/total
-    # maybe need to normalize?? but that doesn't feel right
-    set_entropy -= (labelWeightedProb/total) * numpy.log2(labelWeightedProb/total)
+    
+    set_entropy += (-labelWeightedProb/total) * numpy.log2(labelWeightedProb/total)
   
-
-  # set_entropy = 0
-  
-  
-   
-  # for binary I can do this
-  # print(set_entropy)
   assert(set_entropy >= 0)
   return set_entropy, total
 

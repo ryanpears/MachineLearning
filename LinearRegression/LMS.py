@@ -1,11 +1,10 @@
 import sys
+import os
 import numpy
 from numpy.core.fromnumeric import prod
 from numpy.lib.function_base import average, corrcoef
 
-
-# TODO use a relative  path
-sys.path.insert(0, "/Users/ryanpearson/Documents/CollegeHomework/Fall2021/MachineLearning/MachineLearning/DecisionTree")
+sys.path.append(os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'DecisionTree')))
 # only using for csv parsing
 from DecisionTree import get_training_data, read_columns
 
