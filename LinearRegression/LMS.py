@@ -61,9 +61,9 @@ def batch_gradient_descent(df, learning_rate):
   print("created weight vector", weights)
   r = learning_rate
   round = 0
+  print('round, cost')
   while True:
-    print('on round ', round)
-    print("cost function value is ", cost_function(df, weights))
+    print(f"{round}, {cost_function(df, weights)}")
     round += 1
     # compute gradient of J(w) at w^t DeltaJ(w^t)
     gradient = cost_function_gradient(df, weights)
@@ -94,9 +94,9 @@ def stochastic_gradient_descent(df, learning_rate):
       weights.append(0)
   round = 0
   r = learning_rate
+  print("round, cost")
   while True:
-    print('on round ', round)
-    print("cost function value is ", cost_function(df, weights))
+    print(f"{round}, {cost_function(df, weights)}")
     round += 1
     # pretend this example is the whole example 
     sample = df.sample(n=1)
@@ -142,7 +142,7 @@ if __name__ == "__main__":
   # add a column so that the bais can be part of the weight vector
   train_df.insert(loc=0, column="baisvalue", value=1)
   test_df.insert(loc=0, column="baisvalue", value=1)
-  batch_learning_rate = 1/20
+  batch_learning_rate = 1/16
   stochastic_learning_rate = 1/32
 
   print("batch gradient descent")
