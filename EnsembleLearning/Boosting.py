@@ -334,8 +334,15 @@ if __name__ == "__main__":
     train_df =  get_training_data_with_header(sys.argv[1], columns)
     
     train_df[LABEL] = train_df[LABEL].apply(lambda x: 1 if x == 1 else -1)
-    test_df = train_df[24000:]
-    train_df = train_df[:24000]
+    test_df = train_df.sample(n=6000, replace=False)
+    print(test_df)
+    train_df = train_df.drop(test_df.index)
+    print(train_df)
+    test_df.reset_index(drop=True, inplace=True)
+    train_df.reset_index(drop=True, inplace=True)
+
+    print(test_df)
+    print(train_df)
 
     rows_num = len(train_df)
     train_df['weight'] = 1/rows_num
