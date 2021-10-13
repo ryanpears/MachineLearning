@@ -1,0 +1,1 @@
+X1(num),x2,x3,x4,x5(num),x6,x7,x8,x9,x10,x11,x12(num),x13(num),x14(num),x15(num),x16(num),x17(num),x18(num),x19(num),x20(num),x21(num),x22(num),x23(num),Y
