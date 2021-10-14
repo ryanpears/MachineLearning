@@ -351,6 +351,16 @@ if __name__ == "__main__":
     for a in columns[:-1]:
       attributes[a] = train_df[a].unique().flatten()
 
+    print("single tree")
+    single_tree = ID3(train_df, attributes, entropy, 23)
+    correct, incorrect = 0, 0
+    for index, row in test_df.iterrows():
+      if use_stump(single_tree, row) == row[LABEL]:
+        correct += 1
+      else: 
+        incorrect += 1
+    print("single tree error is ", incorrect/(correct+ incorrect))
+
     print("ADAboost")
     model_tests(train_df, test_df, attributes, 'boosted')
 
@@ -359,3 +369,4 @@ if __name__ == "__main__":
 
     print("random forest sample size = 4")
     model_tests(train_df, test_df, attributes, 'random', 4)
+    
