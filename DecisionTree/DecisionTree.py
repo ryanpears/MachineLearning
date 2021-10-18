@@ -41,7 +41,11 @@ def ID3(df, Attributes, split_funct, max_depth=None, depth=0, is_random=False, r
     max_depth = len(Attributes)
   # return most common label if all have the same label or max depth is reached 
   if is_unique(df[LABEL]) or (int(depth) >= int(max_depth)) or random_sample > len(Attributes):
-    value = int(df[LABEL].value_counts().idxmax())
+    if split_funct == weighted_entropy:
+      value_df = df.groupby(LABEL)['weight'].sum()
+      value = value_df.idxmax()
+    else:
+      value = int(df[LABEL].value_counts().idxmax())
     assert (value == -1 or value == 1)
     return DecisionTree(value)
   # 1. Create  Root Node
@@ -72,7 +76,7 @@ def ID3(df, Attributes, split_funct, max_depth=None, depth=0, is_random=False, r
       best_attribute = attribute
   root = DecisionTree(best_attribute)
   # 3. for each v that A can take
- 
+  # print("best attribute", best_attribute)
   all_values = df[best_attribute].unique()
   for value in all_values:
     # a. add new branch to the  tree  A=v
