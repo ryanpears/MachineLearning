@@ -27,3 +27,19 @@ Max Depth is an integer that will limit the Decision tree to the depth passed in
 
 UnknownAsMode is a boolean that is used to treat unknown as the mode of that column. if false unknown will be 
 treated as a unique value.
+
+# Ensemble learning
+
+use run.sh to test run a script to use these algorithms against both the bank and defualt credit card datasets. 
+
+This can be run as a console app with `python3 Boosting.py train.csv test.csv columns.txt`
+
+This will run the question 2 problems and print out answers in order. 
+
+it can also be run with `python3 Boosting.py data.csv columns.tx` where the dataset will be split randomly into test and training data for question 3
+
+# Linear Regression
+
+use run.sh to test a script to run this on the concrete dataset. 
+
+this file can also be run with `python3 LinearRegression.py train.csv test.csv columns.txt` to print out the answers to question 4
