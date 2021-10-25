@@ -74,9 +74,11 @@ def averagedPerceptron(df, epochs=10):
         c +=1
         
   averaged_weights = [0] * (len(FEATURES)+1)
+  total = 0
   for vote, weights in W:
+    total += vote
     averaged_weights += vote * weights
-  averaged_weights /= len(W)
+  averaged_weights /= total
   
   return  averaged_weights
 
