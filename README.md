@@ -43,3 +43,10 @@ it can also be run with `python3 Boosting.py data.csv columns.tx` where the data
 use run.sh to test a script to run this on the concrete dataset. 
 
 this file can also be run with `python3 LinearRegression.py train.csv test.csv columns.txt` to print out the answers to question 4
+
+#Perceptron 
+
+use run.sh to run a test script on the bank-note dataset. 
+
+This file can also be run with `python3 Perceptron/Perceptron.py Perceptron/bank-note/train.csv Perceptron/bank-note/test.csv Perceptron/bank-note/columns.txt`
+This prints out the answers for question 2
