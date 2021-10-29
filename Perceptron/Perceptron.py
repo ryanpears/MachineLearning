@@ -156,7 +156,7 @@ if __name__ == "__main__":
   # add bais value to dataframe
   train_df.insert(loc=0, column="baisvalue", value=1)
   test_df.insert(loc=0, column="baisvalue", value=1)
-  
+  numpy.set_printoptions(precision=3)
   # standard preceptron
   print("running standard perceptron")
   standard_learned_weights = standardPerceptron(train_df)
@@ -166,9 +166,15 @@ if __name__ == "__main__":
   #voted preceptron
   print("running voted preceptron")
   voted_weights = votedPerceptron(train_df)
+  
   for vote, weights in voted_weights:
-    print("votes ", vote)
-    print("weights ", weights)
+    # vote += voted_weights_dict.get(repr(weights), 0)
+    # voted_weights_dict[repr(weights)] = vote
+    
+    print(f"vote= {vote}, weights= {weights}\\\\")
+  print(len(voted_weights))
+  # for weight, vote in voted_weights_dict.items():
+  #   print(f"vote= {vote}, weights= {weights}\\\\")
   test_voted_weights(test_df, voted_weights)
 
   #averaged perceptron
