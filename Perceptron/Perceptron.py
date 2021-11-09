@@ -122,23 +122,6 @@ def test_voted_weights(df, voted_weights):
   print("error is ", incorrect/ len(df))
 
 
-# def test_averaged_weights(df, voted_weights):
-#   incorrect = 0
-#   for index, row in df.iterrows():
-#     true_label =  row[LABEL]
-#     test_data = row[:-1]
-    
-#     prediction = 0
-#     for vote, weights in voted_weights:
-#       prediction += vote * numpy.dot(weights, test_data.to_numpy())
-#       # prediction += weight_prediction * vote
-    
-#     prediction = 1 if prediction > 0 else -1
-
-#     if prediction != true_label:
-#       incorrect += 1
-#   print("error is ", incorrect/ len(df))
-
 if __name__ == "__main__":
   #want argv to be train.csv test.csv columns.txt
   train_csv = sys.argv[1]
@@ -168,21 +151,14 @@ if __name__ == "__main__":
   voted_weights = votedPerceptron(train_df)
   
   for vote, weights in voted_weights:
-    # vote += voted_weights_dict.get(repr(weights), 0)
-    # voted_weights_dict[repr(weights)] = vote
-    
     print(f"vote= {vote}, weights= {weights}\\\\")
-  print(len(voted_weights))
-  # for weight, vote in voted_weights_dict.items():
-  #   print(f"vote= {vote}, weights= {weights}\\\\")
+  
   test_voted_weights(test_df, voted_weights)
 
   #averaged perceptron
   print("running averaged perceptron")
   averaged_weights = averagedPerceptron(train_df)
   print("averaged weights ", averaged_weights)
-  # for vote, weights in voted_weights:
-  #   print("votes ", vote)
-  #   print("weights ", weights)
+  
   test_learned_weights(test_df, averaged_weights)
 
