@@ -86,8 +86,8 @@ def dual_svm(X, Y, C):
   # X transpos X 
   # numpy outer product
   result = optimize.minimize(dual_objective_function, 
-                                    'SLSQP',
                                     inital_alphas, 
+                                    method='SLSQP',
                                     args=(X, Y),  
                                     bounds=bnds,
                                     constraints=zero_constraint,
@@ -107,7 +107,7 @@ def dual_objective_function(alphas, X, Y):
   # print(alphas)
   row_count, col_count = X.shape
    # \sum \alphaI - 1/2 sum_j sum_i a_j a_i y_j y_i x_i dot x_j
-  assert len(alphas) == row_count
+  
   alpha_sum = 0
   for alpha in alphas:
     alpha_sum += alpha
@@ -122,8 +122,7 @@ def dual_objective_function(alphas, X, Y):
       y_j = Y[j]
       a_j = alphas[j]
       support_sum += a_i * a_j * y_i * y_j * numpy.dot(x_i, x_j)
-  assert support_sum != None
-  assert alpha_sum != None
+ 
   return 0.5 * support_sum - alpha_sum
 
  
@@ -152,8 +151,8 @@ def gaussain_kernal_svm(X, Y, C, gamma):
 
   # i think instead of x_i dot x_j in the objective just do the gauassan
   result = optimize.minimize(dual_objective_function_guassian, 
-                                    'SLSQP',
                                     inital_alphas, 
+                                    method='SLSQP',
                                     args=(X, Y, gamma),  
                                     bounds=bnds,
                                     constraints=zero_constraint,
@@ -173,7 +172,7 @@ def dual_objective_function_guassian(alphas, X, Y, gamma):
   # print(alphas)
   row_count, col_count = X.shape
    # \sum \alphaI - 1/2 sum_j sum_i a_j a_i y_j y_i x_i dot x_j
-  assert len(alphas) == row_count
+ 
   alpha_sum = 0
   for alpha in alphas:
     alpha_sum += alpha
@@ -193,8 +192,7 @@ def dual_objective_function_guassian(alphas, X, Y, gamma):
       # print(norm_sq)
       guassian = math.exp(- norm_sq/gamma)
       support_sum += a_i * a_j * y_i * y_j * guassian
-  assert support_sum != None
-  assert alpha_sum != None
+  
   return 0.5 * support_sum - alpha_sum
 
 # file reading
