@@ -83,12 +83,15 @@ def dual_svm(X, Y, C):
   #I think this works
   # idea batch this find the suport vectors only optimize points that are a support vector. 
   # batch like 200 at a time???
+  # X transpos X 
+  # numpy outer product
   result = optimize.minimize(dual_objective_function, 
+                                    'SLSQP',
                                     inital_alphas, 
                                     args=(X, Y),  
                                     bounds=bnds,
                                     constraints=zero_constraint,
-                                    tol=0.1)
+                                    tol=0.001)
   optimal_alphas = result.x
   
   #w = sum alpha y xi
@@ -137,7 +140,7 @@ def dual_svm_zero(alphas, Y):
 def gaussain_kernal_svm(X, Y, C, gamma):
   row_count, col_count = X.shape
 
-  inital_alphas = [random.random() * C] * row_count
+  inital_alphas = [0] * row_count
   yArg = (Y,)#must be a tuple to pass in
   # not need to write a different 
   zero_constraint = {'type': 'eq', 'fun': dual_svm_zero, 'args': yArg }
@@ -149,10 +152,12 @@ def gaussain_kernal_svm(X, Y, C, gamma):
 
   # i think instead of x_i dot x_j in the objective just do the gauassan
   result = optimize.minimize(dual_objective_function_guassian, 
+                                    'SLSQP',
                                     inital_alphas, 
                                     args=(X, Y, gamma),  
                                     bounds=bnds,
-                                    constraints=zero_constraint)
+                                    constraints=zero_constraint,
+                                    tol=0.001)
   optimal_alphas = result.x
 
   #w = sum alpha y xi
@@ -235,8 +240,8 @@ if __name__ == "__main__":
 
   allC = [100/873, 500/873, 700/873]
 
-  # print("problem 2a")
-  #TODO trtaining and test error
+  print("problem 2a")
+  # # TODO trtaining and test error
   for C in allC:
     w = primal_svm(train_df, C, 2**-2, learning_rate_1)
     print(w)
@@ -254,7 +259,7 @@ if __name__ == "__main__":
     print("test error")
     test_learned_weights(test_df, w)
   
-  # problem 2c is a comparision
+  # # problem 2c is a comparision
 
   #format data to numpy to help speed up optimzation
   train_df_x  = train_df.drop(columns=LABEL)
@@ -262,7 +267,7 @@ if __name__ == "__main__":
 
   # I believe this is correct. due to the same error on the medium dataset
   # we get the same error on medium dataset so just use that.
-  print("problem 3a")
+  # print("problem 3a")
   for C in allC:
     w = dual_svm(train_df_x.to_numpy(), train_df_y.to_numpy(), C)
     print("training error")
@@ -272,7 +277,7 @@ if __name__ == "__main__":
   
   print("problem 3b")
   gammas = [0.1,0.5,1,5,100]
-  # TODO add support vector counts
+  
   support_vec_index = {}
   for C in allC:
     print("C is ", C)
@@ -296,7 +301,7 @@ if __name__ == "__main__":
   for index in range(0, len(gammas)-1):
     curr = numpy.array(support_vec_index[gammas[index]])
     next = numpy.array(support_vec_index[gammas[index+1]])
-    print(f"count of overlapping suppoer vectors between {gammas[index]} and {gammas[index+1]}")
+    print(f"count of overlapping support vectors between {gammas[index]} and {gammas[index+1]}")
     intersection = list(set(curr).intersection(next))
     print(len(intersection))
   #TODO if time visualize this stuff. 
