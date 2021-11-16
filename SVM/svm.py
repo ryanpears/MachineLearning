@@ -239,7 +239,7 @@ if __name__ == "__main__":
   allC = [100/873, 500/873, 700/873]
 
   print("problem 2a")
-  # # TODO trtaining and test error
+  
   for C in allC:
     w = primal_svm(train_df, C, 2**-2, learning_rate_1)
     print(w)
@@ -248,14 +248,14 @@ if __name__ == "__main__":
     print("test error")
     test_learned_weights(test_df, w)
 
-  print("problem 2b")
-  for C in allC:
-    w = primal_svm(train_df, C, 2**2, learning_rate_2)
-    print(w)
-    print("training error")
-    test_learned_weights(train_df, w)
-    print("test error")
-    test_learned_weights(test_df, w)
+  # print("problem 2b")
+  # for C in allC:
+  #   w = primal_svm(train_df, C, 2**2, learning_rate_2)
+  #   print(w)
+  #   print("training error")
+  #   test_learned_weights(train_df, w)
+  #   print("test error")
+  #   test_learned_weights(test_df, w)
   
   # # problem 2c is a comparision
 
@@ -266,43 +266,42 @@ if __name__ == "__main__":
   # I believe this is correct. due to the same error on the medium dataset
   # we get the same error on medium dataset so just use that.
   # print("problem 3a")
-  for C in allC:
-    w = dual_svm(train_df_x.to_numpy(), train_df_y.to_numpy(), C)
-    print("training error")
-    test_learned_weights(train_df, w)
-    print("test error")
-    test_learned_weights(test_df, w)
+  # for C in allC:
+  #   w = dual_svm(train_df_x.to_numpy(), train_df_y.to_numpy(), C)
+  #   print("training error")
+  #   test_learned_weights(train_df, w)
+  #   print("test error")
+  #   test_learned_weights(test_df, w)
   
-  print("problem 3b")
-  gammas = [0.1,0.5,1,5,100]
+  # print("problem 3b")
+  # gammas = [0.1,0.5,1,5,100]
   
-  support_vec_index = {}
-  for C in allC:
-    print("C is ", C)
-    for gamma in gammas:
-      # initalize suport vectors
-      if math.isclose(C, 500/873, rel_tol=0.1):
-        support_vec_index[gamma] = []
+  # support_vec_index = {}
+  # for C in allC:
+  #   print("C is ", C)
+  #   for gamma in gammas:
+  #     # initalize suport vectors
+  #     if math.isclose(C, 500/873, rel_tol=0.1):
+  #       support_vec_index[gamma] = []
 
-      print('gamma is', gamma)
-      w, alphas = gaussain_kernal_svm(train_df_x.to_numpy(), train_df_y.to_numpy(), C, gamma)
-      print("training error")
-      test_learned_weights(train_df, w)
-      print("test error")
-      test_learned_weights(test_df, w)
-      if math.isclose(C, 500/873, rel_tol=0.1):
-          for index, alpha in enumerate(alphas):
-            if not math.isclose(0, alpha, rel_tol=1e-5):
-              support_vec_index[gamma].append(index)
+  #     print('gamma is', gamma)
+  #     w, alphas = gaussain_kernal_svm(train_df_x.to_numpy(), train_df_y.to_numpy(), C, gamma)
+  #     print("training error")
+  #     test_learned_weights(train_df, w)
+  #     print("test error")
+  #     test_learned_weights(test_df, w)
+  #     if math.isclose(C, 500/873, rel_tol=0.1):
+  #         for index, alpha in enumerate(alphas):
+  #           if not math.isclose(0, alpha, rel_tol=1e-5):
+  #             support_vec_index[gamma].append(index)
 
-  print("problem 3c")
-  for index in range(0, len(gammas)-1):
-    curr = numpy.array(support_vec_index[gammas[index]])
-    next = numpy.array(support_vec_index[gammas[index+1]])
-    print(f"count of overlapping support vectors between {gammas[index]} and {gammas[index+1]}")
-    intersection = list(set(curr).intersection(next))
-    print(len(intersection))
-  #TODO if time visualize this stuff. 
-  # I don't really think it should very much but this constitant as fuck
+  # print("problem 3c")
+  # for index in range(0, len(gammas)-1):
+  #   curr = numpy.array(support_vec_index[gammas[index]])
+  #   next = numpy.array(support_vec_index[gammas[index+1]])
+  #   print(f"count of overlapping support vectors between {gammas[index]} and {gammas[index+1]}")
+  #   intersection = list(set(curr).intersection(next))
+  #   print(len(intersection))
+  
     
   
