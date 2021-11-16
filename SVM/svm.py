@@ -235,18 +235,19 @@ if __name__ == "__main__":
   train_df.insert(loc=0, column="baisvalue", value=1)
   test_df.insert(loc=0, column="baisvalue", value=1)
 
+  #TODO change
+  # allC = [100/873, 500/873, 700/873]
+  allC =[500/873]
 
-  allC = [100/873, 500/873, 700/873]
-
-  print("problem 2a")
+  # print("problem 2a")
   
-  for C in allC:
-    w = primal_svm(train_df, C, 2**-2, learning_rate_1)
-    print(w)
-    print("training error")
-    test_learned_weights(train_df, w)
-    print("test error")
-    test_learned_weights(test_df, w)
+  # for C in allC:
+  #   w = primal_svm(train_df, C, 2**-2, learning_rate_1)
+  #   print(w)
+  #   print("training error")
+  #   test_learned_weights(train_df, w)
+  #   print("test error")
+  #   test_learned_weights(test_df, w)
 
   # print("problem 2b")
   # for C in allC:
@@ -274,34 +275,34 @@ if __name__ == "__main__":
   #   test_learned_weights(test_df, w)
   
   # print("problem 3b")
-  # gammas = [0.1,0.5,1,5,100]
+  gammas = [0.1,0.5,1,5,100]
   
-  # support_vec_index = {}
-  # for C in allC:
-  #   print("C is ", C)
-  #   for gamma in gammas:
-  #     # initalize suport vectors
-  #     if math.isclose(C, 500/873, rel_tol=0.1):
-  #       support_vec_index[gamma] = []
+  support_vec_index = {}
+  for C in allC:
+    print("C is ", C)
+    for gamma in gammas:
+      # initalize suport vectors
+      if math.isclose(C, 500/873, rel_tol=0.1):
+        support_vec_index[gamma] = []
 
-  #     print('gamma is', gamma)
-  #     w, alphas = gaussain_kernal_svm(train_df_x.to_numpy(), train_df_y.to_numpy(), C, gamma)
-  #     print("training error")
-  #     test_learned_weights(train_df, w)
-  #     print("test error")
-  #     test_learned_weights(test_df, w)
-  #     if math.isclose(C, 500/873, rel_tol=0.1):
-  #         for index, alpha in enumerate(alphas):
-  #           if not math.isclose(0, alpha, rel_tol=1e-5):
-  #             support_vec_index[gamma].append(index)
+      print('gamma is', gamma)
+      w, alphas = gaussain_kernal_svm(train_df_x.to_numpy(), train_df_y.to_numpy(), C, gamma)
+      print("training error")
+      test_learned_weights(train_df, w)
+      print("test error")
+      test_learned_weights(test_df, w)
+      if math.isclose(C, 500/873, rel_tol=0.1):
+          for index, alpha in enumerate(alphas):
+            if not math.isclose(0, alpha, rel_tol=1e-5):
+              support_vec_index[gamma].append(index)
 
-  # print("problem 3c")
-  # for index in range(0, len(gammas)-1):
-  #   curr = numpy.array(support_vec_index[gammas[index]])
-  #   next = numpy.array(support_vec_index[gammas[index+1]])
-  #   print(f"count of overlapping support vectors between {gammas[index]} and {gammas[index+1]}")
-  #   intersection = list(set(curr).intersection(next))
-  #   print(len(intersection))
+  print("problem 3c")
+  for index in range(0, len(gammas)-1):
+    curr = numpy.array(support_vec_index[gammas[index]])
+    next = numpy.array(support_vec_index[gammas[index+1]])
+    print(f"count of overlapping support vectors between {gammas[index]} and {gammas[index+1]}")
+    intersection = list(set(curr).intersection(next))
+    print(len(intersection))
   
     
   
