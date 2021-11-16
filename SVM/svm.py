@@ -239,15 +239,15 @@ if __name__ == "__main__":
   allC = [100/873, 500/873, 700/873]
   # allC =[500/873]
 
-  print("problem 2a")
+  # print("problem 2a")
   
-  for C in allC:
-    w = primal_svm(train_df, C, 2**-2, learning_rate_1)
-    print(w)
-    print("training error")
-    test_learned_weights(train_df, w)
-    print("test error")
-    test_learned_weights(test_df, w)
+  # for C in allC:
+  #   w = primal_svm(train_df, C, 2**-2, learning_rate_1)
+  #   print(w)
+  #   print("training error")
+  #   test_learned_weights(train_df, w)
+  #   print("test error")
+  #   test_learned_weights(test_df, w)
 
   # print("problem 2b")
   # for C in allC:
@@ -266,14 +266,14 @@ if __name__ == "__main__":
 
   # I believe this is correct. due to the same error on the medium dataset
   # we get the same error on medium dataset so just use that.
-  # print("problem 3a")
-  # for C in allC:
-  #   w = dual_svm(train_df_x.to_numpy(), train_df_y.to_numpy(), C)
-  #   print(w)
-  #   print("training error")
-  #   test_learned_weights(train_df, w)
-  #   print("test error")
-  #   test_learned_weights(test_df, w)
+  print("problem 3a")
+  for C in allC:
+    w = dual_svm(train_df_x.to_numpy(), train_df_y.to_numpy(), C)
+    print(w)
+    print("training error")
+    test_learned_weights(train_df, w)
+    print("test error")
+    test_learned_weights(test_df, w)
   
   # print("problem 3b")
   # gammas = [0.1,0.5,1,5,100]
