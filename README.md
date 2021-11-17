@@ -44,9 +44,18 @@ use run.sh to test a script to run this on the concrete dataset.
 
 this file can also be run with `python3 LinearRegression.py train.csv test.csv columns.txt` to print out the answers to question 4
 
-#Perceptron 
+# Perceptron 
 
 use run.sh to run a test script on the bank-note dataset. 
 
 This file can also be run with `python3 Perceptron/Perceptron.py Perceptron/bank-note/train.csv Perceptron/bank-note/test.csv Perceptron/bank-note/columns.txt`
 This prints out the answers for question 2
+
+# SVM 
+
+use runHW4.sh to run a test script on the bank-note dataset.
+
+This file can also be run on the bank-note dataset with `python3 SVM/svm.py SVM/bank-note/train.csv SVM/bank-note/test.csv SVM/bank-note/columns.txt`
+
+The syntax for using this script from the command  line is: `python3 SVM/svm.py train.csv test.csv columns.txt` 
+where columns.txt is a comma seperated text file of column names.
