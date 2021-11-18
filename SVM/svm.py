@@ -8,7 +8,7 @@ import random
 FEATURES = []
 LABEL = ""
 
-# tune a??
+
 def learning_rate_1(gamma_0, t):
   a = 2**10
   gamma_a = float(gamma_0/a)
@@ -29,7 +29,7 @@ def primal_svm(df, C, gamma_0, learning_rate):
   #initialize w_o
   #Note features plus 1 is for the b.
   w = [0] * (len(FEATURES)+1)
-  # w_0 = [0] * (len(FEATURES)+1)
+  
   epochs = 100
   N = len(df) # think this is number of samples
   # for epochs
@@ -38,10 +38,9 @@ def primal_svm(df, C, gamma_0, learning_rate):
     df = df.sample(frac=1).reset_index(drop=True)
     t = i
     gamma = learning_rate(gamma_0, t)
-    # print(gamma)
     sub_w = [0] * (len(FEATURES)+1)
+
     #for each training example
-    #TODO maybe clean up
     for index, row in df.iterrows():
       train_x = (row[:-1]).to_numpy()
       train_y = row[LABEL]
@@ -51,21 +50,16 @@ def primal_svm(df, C, gamma_0, learning_rate):
         xy = numpy.multiply(train_y, train_x)
         cn = C*N
         sub_w += - numpy.multiply(cn, xy)
-      else:
-        pass
     
     total_sub_w = w + sub_w/ numpy.linalg.norm(sub_w, 1)
-    # old_w_sub = old
+    
     w += w - numpy.multiply(gamma, total_sub_w)
     w = w / numpy.linalg.norm(w, 1)
     #check convergence
-    # diff = w - old_w
-    # print(sub_w)
     eps = i*0.01
     if numpy.all(numpy.absolute(total_sub_w) < eps) and i > 10:
       print(f"converged in {i} epochs")
       break
-
   return w
 
 
@@ -80,11 +74,6 @@ def dual_svm(X, Y, C):
   bnds = []
   for bound in range(len(inital_alphas)):
     bnds.append(b)
-  #I think this works
-  # idea batch this find the suport vectors only optimize points that are a support vector. 
-  # batch like 200 at a time???
-  # X transpos X 
-  # numpy outer product
   result = optimize.minimize(dual_objective_function, 
                                     inital_alphas, 
                                     method='SLSQP',
@@ -104,7 +93,6 @@ def dual_svm(X, Y, C):
 
 def dual_objective_function(alphas, X, Y):
   # X, Y = XY
-  # print(alphas)
   row_count, col_count = X.shape
    # \sum \alphaI - 1/2 sum_j sum_i a_j a_i y_j y_i x_i dot x_j
   
@@ -141,9 +129,9 @@ def gaussain_kernal_svm(X, Y, C, gamma):
 
   inital_alphas = [0] * row_count
   yArg = (Y,)#must be a tuple to pass in
-  # not need to write a different 
+  # not need to write a different function for this constraint
   zero_constraint = {'type': 'eq', 'fun': dual_svm_zero, 'args': yArg }
-
+  # bounds constraint
   b = (0, C)
   bnds = []
   for bound in range(len(inital_alphas)):
@@ -160,7 +148,7 @@ def gaussain_kernal_svm(X, Y, C, gamma):
   optimal_alphas = result.x
 
   #w = sum alpha y xi
-  w= [0] * col_count
+  w = [0] * col_count
   for index, x in enumerate(X):
     xy = numpy.multiply(Y[index], x)
     w += numpy.multiply(optimal_alphas[index], xy)
@@ -171,7 +159,7 @@ def dual_objective_function_guassian(alphas, X, Y, gamma):
   # X, Y = XY
   # print(alphas)
   row_count, col_count = X.shape
-   # \sum \alphaI - 1/2 sum_j sum_i a_j a_i y_j y_i x_i dot x_j
+   # \sum \alphaI - 1/2 sum_j sum_i a_j a_i y_j y_i gaussian kernel
  
   alpha_sum = 0
   for alpha in alphas:
@@ -187,9 +175,7 @@ def dual_objective_function_guassian(alphas, X, Y, gamma):
       y_j = Y[j]
       a_j = alphas[j]
       # instead of dot do guassian exp norm x_i - x_j ^2 / gamma
-      # print(x_i-x_j)
       norm_sq = numpy.linalg.norm(x_i - x_j) ** 2
-      # print(norm_sq)
       guassian = math.exp(- norm_sq/gamma)
       support_sum += a_i * a_j * y_i * y_j * guassian
   
@@ -235,28 +221,26 @@ if __name__ == "__main__":
   train_df.insert(loc=0, column="baisvalue", value=1)
   test_df.insert(loc=0, column="baisvalue", value=1)
 
-  #TODO change
   allC = [100/873, 500/873, 700/873]
-  # allC =[500/873]
 
-  # print("problem 2a")
+  print("problem 2a")
   
-  # for C in allC:
-  #   w = primal_svm(train_df, C, 2**-2, learning_rate_1)
-  #   print(w)
-  #   print("training error")
-  #   test_learned_weights(train_df, w)
-  #   print("test error")
-  #   test_learned_weights(test_df, w)
+  for C in allC:
+    w = primal_svm(train_df, C, 2**-2, learning_rate_1)
+    print(w)
+    print("training error")
+    test_learned_weights(train_df, w)
+    print("test error")
+    test_learned_weights(test_df, w)
 
-  # print("problem 2b")
-  # for C in allC:
-  #   w = primal_svm(train_df, C, 2**2, learning_rate_2)
-  #   print(w)
-  #   print("training error")
-  #   test_learned_weights(train_df, w)
-  #   print("test error")
-  #   test_learned_weights(test_df, w)
+  print("problem 2b")
+  for C in allC:
+    w = primal_svm(train_df, C, 2**2, learning_rate_2)
+    print(w)
+    print("training error")
+    test_learned_weights(train_df, w)
+    print("test error")
+    test_learned_weights(test_df, w)
   
   # # problem 2c is a comparision
 
@@ -264,8 +248,7 @@ if __name__ == "__main__":
   train_df_x  = train_df.drop(columns=LABEL)
   train_df_y = train_df[LABEL]
 
-  # I believe this is correct. due to the same error on the medium dataset
-  # we get the same error on medium dataset so just use that.
+  # I believe this is correct. 
   print("problem 3a")
   for C in allC:
     w = dual_svm(train_df_x.to_numpy(), train_df_y.to_numpy(), C)
@@ -275,35 +258,35 @@ if __name__ == "__main__":
     print("test error")
     test_learned_weights(test_df, w)
   
-  # print("problem 3b")
-  # gammas = [0.1,0.5,1,5,100]
+  print("problem 3b")
+  gammas = [0.1,0.5,1,5,100]
   
-  # support_vec_index = {}
-  # for C in allC:
-  #   print("C is ", C)
-  #   for gamma in gammas:
-  #     # initalize suport vectors
-  #     if math.isclose(C, 500/873, rel_tol=0.1):
-  #       support_vec_index[gamma] = []
+  support_vec_index = {}
+  for C in allC:
+    print("C is ", C)
+    for gamma in gammas:
+      # initalize suport vectors
+      if math.isclose(C, 500/873, rel_tol=0.1):
+        support_vec_index[gamma] = []
 
-  #     print('gamma is', gamma)
-  #     w, alphas = gaussain_kernal_svm(train_df_x.to_numpy(), train_df_y.to_numpy(), C, gamma)
-  #     print("training error")
-  #     test_learned_weights(train_df, w)
-  #     print("test error")
-  #     test_learned_weights(test_df, w)
-  #     if math.isclose(C, 500/873, rel_tol=0.1):
-  #         for index, alpha in enumerate(alphas):
-  #           if not math.isclose(0, alpha, rel_tol=1e-5):
-  #             support_vec_index[gamma].append(index)
+      print('gamma is', gamma)
+      w, alphas = gaussain_kernal_svm(train_df_x.to_numpy(), train_df_y.to_numpy(), C, gamma)
+      print("training error")
+      test_learned_weights(train_df, w)
+      print("test error")
+      test_learned_weights(test_df, w)
+      if math.isclose(C, 500/873, rel_tol=0.1):
+          for index, alpha in enumerate(alphas):
+            if not math.isclose(0, alpha, rel_tol=1e-5):
+              support_vec_index[gamma].append(index)
 
-  # print("problem 3c")
-  # for index in range(0, len(gammas)-1):
-  #   curr = numpy.array(support_vec_index[gammas[index]])
-  #   next = numpy.array(support_vec_index[gammas[index+1]])
-  #   print(f"count of overlapping support vectors between {gammas[index]} and {gammas[index+1]}")
-  #   intersection = list(set(curr).intersection(next))
-  #   print(len(intersection))
+  print("problem 3c")
+  for index in range(0, len(gammas)-1):
+    curr = numpy.array(support_vec_index[gammas[index]])
+    next = numpy.array(support_vec_index[gammas[index+1]])
+    print(f"count of overlapping support vectors between {gammas[index]} and {gammas[index+1]}")
+    intersection = list(set(curr).intersection(next))
+    print(len(intersection))
   
     
   
