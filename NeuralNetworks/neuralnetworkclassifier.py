@@ -6,10 +6,31 @@ import numpy as np
 LABEL = ''
 FEATURES = []
 
+class NeuralNetwork:
+  def __init__(self, hidden_layer_size):
+    # set initial weights and other stuff
+    self.layer_depth = 3 # always 3 layers maybe unused
+    self.hidden_layer_size = hidden_layer_size
+    self.layer_sizes = [len(FEATURES) + 1, self.hidden_layer_size, self.hidden_layer_size, 1] #plus 1 for bias and 1 for last layer
+    # creates matrix of weights from layer to layer in each 
+    self.weights = [np.random.randn(y, x) for x, y in zip(self.layer_sizes[:-1], self.layer_sizes[1:])]
+    print(self.weights)
+  
+  def stochastic_gradient_descent(self):
+    pass
+
+  def back_propigation(self, training_example):
+    pass
+
+  def predict_example(self, example):
+    pass
+
 # sigmoid
 def sigmoid(x):
   return 1.0/(1.0+np.exp(-x))
 
+def sigmoid_prime(x):
+  return sigmoid(x) * (1.0 - sigmoid(x))
 
 # file reading
 def read_columns(file_path):
@@ -38,3 +59,5 @@ if __name__ == "__main__":
   # test_df[LABEL] = test_df[LABEL].apply(lambda x: 1 if x == 1 else -1)
   train_df.insert(loc=0, column="baisvalue", value=1)
   test_df.insert(loc=0, column="baisvalue", value=1)
+
+  nn = NeuralNetwork(3)
