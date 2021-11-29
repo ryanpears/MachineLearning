@@ -24,7 +24,7 @@ class NeuralNetwork:
       self.weights = [np.random.randn(y-1, x) for x, y in zip(self.layer_sizes[:-1], self.layer_sizes[1:])]
     # creates matrix of weights from layer to layer in each 
     
-    print(self.weights)
+    print("weoghts are ", self.weights)
   
   def stochastic_gradient_descent(self):
     pass
@@ -32,9 +32,10 @@ class NeuralNetwork:
   def back_propigation(self, training_example):
     x = training_example[:-1]
     y = training_example[-1]
+
     # forward pass similar to the prediction but storing useful data.
     z_vectors = [] # store the z vectors per layer before sigmoid  (maybe change)
-    activation_vectors = [] # store the activation vectors per layer
+    activation_vectors = [x] # store the activation vectors per layer
     # actualy pass
     #TODO this is a bit wonky for the last layer
     example = x
@@ -63,16 +64,65 @@ class NeuralNetwork:
     print("weights init ", nabla_w)
     #maybe update the output layer weights first
     print("updating output layer")
-    for layer in range(2, len(nabla_w)):
-      d_w_vec_i = nabla_w[layer]
-      for j, d_w_vec in enumerate(d_w_vec_i):
-        print("d_w vec is ", d_w_vec)
-        for i, d_w in enumerate(d_w_vec):
-          print(" z is ", z_vectors[-layer][i])
-          g_s = loss_prime(result, y) * activation_vectors[-layer][i]
-          # print(g_s)
-          nabla_w[-1][0][i] += g_s
+    partial_cache = []
+    for layer_index in reversed(range(len(self.weights))):
+      layer = self.weights[layer_index]
+      print("layer is ", layer)
+      print("layer index is ", layer_index)
+      if layer_index != len(self.weights)-1:
+        for j in range(len(layer)):
+          weights = layer[j]
+          for i in range(len(weights)):
+            all_next_layer_weights = self.weights[layer_index+1]
+            # next_layer_weights = self.weights[layer_index+1][0][j+1]# plus 1 to skip bais weight
+            next_layer_weights = []
+            for next_weight_vec in all_next_layer_weights:
+              next_layer_weights.append(next_weight_vec[j+1])
+            # print("next layer weights", next_layer_weights)
+            # print("activation_vectors[(layer_index)][j]", activation_vectors[(layer_index)][j+1])
+            # print("activation_vectors[(layer_index -1)][i]", activation_vectors[(layer_index -1)][i])
+            d_loss = 0
+            for next_index, next_weight in enumerate(next_layer_weights):
+              print("next_weight", next_weight)
+              print("sigmoid_prime", sigmoid_prime_2(activation_vectors[(layer_index+1)][j+1]))
+              print("activation ", activation_vectors[(layer_index)][i])
+              print("i is ", i)
+              if len(partial_cache) <= j:
+                print("cool")
+                partial_cache.append(loss_prime(result, y) * next_weight * sigmoid_prime_2(activation_vectors[(layer_index+1)][j+1]))
+              print("partial cache is ", partial_cache)
+              if layer_index == 0:
+                d_loss += partial_cache[next_index] * next_weight * sigmoid_prime_2(activation_vectors[(layer_index+1)][j+1]) * activation_vectors[(layer_index)][i]
+              else:
+                d_loss += partial_cache[j] * activation_vectors[(layer_index)][i]
+              # d_loss += nabla_w[layer_index+1][j][0] * activation_vectors[(layer_index)][i]
+            # i think the derivative of futher up * weight * activtation
+            # print("d_loss is ", d_loss)
+            nabla_w[layer_index][j][i] = d_loss
+            print(nabla_w)
+      else: 
+        # special case for last layer
+        for j in range(len(layer)):
+          weights = layer[j]
+          print("weight is",  weights)
+          print(activation_vectors[(layer_index -1)])
+          for i in range(len(weights)):
+            nabla_w[layer_index][j][i] = loss_prime(result, y) * activation_vectors[(layer_index)][i]
+            # partial_cache[0].append(loss_prime(result, y) * weights[i])
+
     print(nabla_w)
+    # for layer in range(1, len(nabla_w)):
+    #   print("layer is ", layer)
+    #   d_w_vec_i = nabla_w[-layer]
+    #   print("", d_w_vec_i)
+    #   for j, d_w_vec in enumerate(d_w_vec_i):
+    #     print("d_w vec is ", d_w_vec)
+    #     for i, d_w in enumerate(d_w_vec):
+    #       dependent_vec = 1
+    #       g_s = loss_prime(result, y) * dependent_vec * activation_vectors[-(layer+1)][i]
+    #       print(g_s)
+    #       nabla_w[-layer][j][i] += g_s
+    # print(nabla_w)
 
     # for l in range(2, self.layer_depth):
     #   z_vec = z_vectors[-l]
@@ -88,28 +138,8 @@ class NeuralNetwork:
     return
 
   def compute_partial_for(self, weight, z_vectors, activation_vectors):
-     #find all paths from z_n^h to output y
-    paths = []
-    # for each path s
-    for path in paths:
-      pass
-      # for each node z in path
-      for node in path:
-        pass
-        #if node is y compute d L/ d y
-        #else compute partial of nodes parent over node
-        # multiply partials together to get g_s
-        #  d L / d w_{m n}^{h} += g_s * d L / d w_{m n}^{h}
-
+     
     return
-
-  def paths_from_weight(self, weight_index):
-    """
-    weight_index is [layer, to, from]
-    """
-    paths = []
-
-    return 
 
 
   def predict_example(self, example):
@@ -135,6 +165,9 @@ def sigmoid(x):
 
 def sigmoid_prime(x):
   return sigmoid(x) * (1.0 - sigmoid(x))
+
+def sigmoid_prime_2(x):
+  return (x) * (1.0 - (x))
 
 def sigmoid_inverse(x):
   return np.log(x/(1.0 - x))
