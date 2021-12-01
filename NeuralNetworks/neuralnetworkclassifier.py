@@ -7,11 +7,12 @@ LABEL = ''
 FEATURES = []
 
 class NeuralNetwork:
-  def __init__(self, hidden_layer_size):
+  def __init__(self, hidden_layer_size, random_weight_init):
     # set initial weights and other stuff
     self.layer_depth = 4 # always 3 layers maybe unused plus a output
     self.hidden_layer_size = hidden_layer_size
     # weights are structured like weight[layer][to][from]
+    #TODO remove none option
     if hidden_layer_size == None:
       # i think the paper neural net
       self.layer_sizes = [3, 3, 3, 1]
@@ -19,20 +20,39 @@ class NeuralNetwork:
       np.array([np.array([-1, -2, -3]), np.array([1, 2, 3])]),
       np.array([np.array([-1, 2, -1.5])]) 
       ], dtype=object)
+    elif not random_weight_init:
+      self.layer_sizes = [len(FEATURES) + 1, self.hidden_layer_size, self.hidden_layer_size, 2] #plus 1 for bias and 1 for last layer
+      self.weights = [np.zeros((y-1, x)) for x, y in zip(self.layer_sizes[:-1], self.layer_sizes[1:])]
     else:
       self.layer_sizes = [len(FEATURES) + 1, self.hidden_layer_size, self.hidden_layer_size, 2] #plus 1 for bias and 1 for last layer
       self.weights = [np.random.randn(y-1, x) for x, y in zip(self.layer_sizes[:-1], self.layer_sizes[1:])]
     # creates matrix of weights from layer to layer in each 
     
-    print("weoghts are ", self.weights)
+    # print("weights are ", self.weights)
   
-  def stochastic_gradient_descent(self):
-    pass
+  def stochastic_gradient_descent(self, df, max_epoch, gamma_0):
+    #given a set s = {x_i, y_i} = df
+    #having initial weights set
+    #for each epoch
+    for epoch in range(max_epoch):
+      #shuffle the data
+      df = df.sample(frac=1).reset_index(drop=True)  
+      gamma = learning_rate(gamma_0, epoch)
+      # for each training example in df
+      for index, row in df.iterrows():
+        # treat example as the whole dataset
+        #compute gradient
+        gradient = self.back_propigation(row)
+        # assert gradient.shape() == self.weights.shape()
+        # update w = w - learning_rate  * gradient
+        self.weights = self.weights - np.multiply(gamma, gradient)
+      #TODO computer convergence
+    print("learned weights ", self.weights)
 
   def back_propigation(self, training_example):
+    # messy and really gross but it works
     x = training_example[:-1]
     y = training_example[-1]
-
     # forward pass similar to the prediction but storing useful data.
     z_vectors = [] # store the z vectors per layer before sigmoid  (maybe change)
     activation_vectors = [x] # store the activation vectors per layer
@@ -52,112 +72,64 @@ class NeuralNetwork:
       activation_vectors.append(result_at_layer)
       example = result_at_layer
     result = sigmoid_inverse(result)
-    print("z_vectors ", z_vectors)
-    print("activations ", activation_vectors)
-    print("result ", result)
-    # compute the loss
-    loss_val = loss(result, y)
-    print("loss is ", loss_val)
-    # backward step
-    # initialize d L / d w_{m n}^{h} = 0
+    
+    #init gradient
     nabla_w = [np.zeros(w.shape) for w in self.weights]
-    print("weights init ", nabla_w)
-    #maybe update the output layer weights first
-    print("updating output layer")
+    
     partial_cache = []
     for layer_index in reversed(range(len(self.weights))):
       layer = self.weights[layer_index]
-      print("layer is ", layer)
-      print("layer index is ", layer_index)
+      
+      cache_index = len(self.weights) - layer_index -1
+      partial_cache.append([])
+     
       if layer_index != len(self.weights)-1:
         for j in range(len(layer)):
           weights = layer[j]
           for i in range(len(weights)):
             all_next_layer_weights = self.weights[layer_index+1]
-            # next_layer_weights = self.weights[layer_index+1][0][j+1]# plus 1 to skip bais weight
+            
             next_layer_weights = []
             for next_weight_vec in all_next_layer_weights:
               next_layer_weights.append(next_weight_vec[j+1])
-            # print("next layer weights", next_layer_weights)
-            # print("activation_vectors[(layer_index)][j]", activation_vectors[(layer_index)][j+1])
-            # print("activation_vectors[(layer_index -1)][i]", activation_vectors[(layer_index -1)][i])
+           
             d_loss = 0
             for next_index, next_weight in enumerate(next_layer_weights):
-              print("next_weight", next_weight)
-              print("sigmoid_prime", sigmoid_prime_2(activation_vectors[(layer_index+1)][j+1]))
-              print("activation ", activation_vectors[(layer_index)][i])
-              print("i is ", i)
-              if len(partial_cache) <= j:
-                print("cool")
-                partial_cache.append(loss_prime(result, y) * next_weight * sigmoid_prime_2(activation_vectors[(layer_index+1)][j+1]))
-              print("partial cache is ", partial_cache)
-              if layer_index == 0:
-                d_loss += partial_cache[next_index] * next_weight * sigmoid_prime_2(activation_vectors[(layer_index+1)][j+1]) * activation_vectors[(layer_index)][i]
-              else:
-                d_loss += partial_cache[j] * activation_vectors[(layer_index)][i]
-              # d_loss += nabla_w[layer_index+1][j][0] * activation_vectors[(layer_index)][i]
-            # i think the derivative of futher up * weight * activtation
-            # print("d_loss is ", d_loss)
+              if len(partial_cache[cache_index]) <= j:
+                partial = 0
+                for index, cached_partial in enumerate(partial_cache[cache_index-1]):
+                  partial += cached_partial * next_layer_weights[next_index+index] * sigmoid_prime_2(activation_vectors[(layer_index+1)][j+1])
+                partial_cache[cache_index].append(partial)
+
+              d_loss = partial_cache[cache_index][j] * activation_vectors[(layer_index)][i]
+    
             nabla_w[layer_index][j][i] = d_loss
-            print(nabla_w)
+            
       else: 
         # special case for last layer
         for j in range(len(layer)):
           weights = layer[j]
-          print("weight is",  weights)
-          print(activation_vectors[(layer_index -1)])
+          # add to cache
+          partial_cache[cache_index].append(loss_prime(result, y))
           for i in range(len(weights)):
             nabla_w[layer_index][j][i] = loss_prime(result, y) * activation_vectors[(layer_index)][i]
-            # partial_cache[0].append(loss_prime(result, y) * weights[i])
+            
 
-    print(nabla_w)
-    # for layer in range(1, len(nabla_w)):
-    #   print("layer is ", layer)
-    #   d_w_vec_i = nabla_w[-layer]
-    #   print("", d_w_vec_i)
-    #   for j, d_w_vec in enumerate(d_w_vec_i):
-    #     print("d_w vec is ", d_w_vec)
-    #     for i, d_w in enumerate(d_w_vec):
-    #       dependent_vec = 1
-    #       g_s = loss_prime(result, y) * dependent_vec * activation_vectors[-(layer+1)][i]
-    #       print(g_s)
-    #       nabla_w[-layer][j][i] += g_s
-    # print(nabla_w)
+    return nabla_w
 
-    # for l in range(2, self.layer_depth):
-    #   z_vec = z_vectors[-l]
-    #   print(z_vec)
-      
-    # not sure of a better way to itterate weights
-    # for weights_at_layer in self.weights[::-1]:
-    #   print(weights_at_layer)
-    #   for weight_vect in weights_at_layer:
-    #     for weight in weight_vect:
-    #       self.compute_partial_for(weight, z_vectors, activation_vectors)
-   
-    return
-
-  def compute_partial_for(self, weight, z_vectors, activation_vectors):
-     
-    return
-
-
-  def predict_example(self, example):
+  def predict(self, example):
     # ugly but I'm confident
     for layer, weightsAtLayer in enumerate(self.weights):
       result_at_layer = [1] # for bias
-      # print(example)
+
       for weights in weightsAtLayer:
-        # print(weights)
         result = sigmoid(np.dot(weights, example))
-        # print("result is", result)
         result_at_layer.append(result)
+
       example = result_at_layer
-    
     #maybe a better way to do this since last layer we  don't do sigmoid
     result = sigmoid_inverse(result)
-    print(result)
-    return result
+    return 1 if result > 0 else -1
 
 # sigmoid
 def sigmoid(x):
@@ -179,6 +151,13 @@ def loss(y, y_prime):
 def loss_prime(y, y_prime):
   return y - y_prime
 
+#learning rate
+def learning_rate(gamma_0, t):
+  a = 2**10
+  gamma_a = float(gamma_0/a)
+  result = gamma_0 / (1 + gamma_a*t)
+  return result
+
 # file reading
 def read_columns(file_path):
   with open(file_path, 'r') as file:
@@ -187,6 +166,19 @@ def read_columns(file_path):
       columnsInLine = line.strip().split(",")
       columns += columnsInLine
     return columns
+
+# testing
+def test_network(df, nn):
+  incorrect = 0
+  for index, row in df.iterrows():
+    true_label = row[LABEL]
+    test_data = row[:-1]
+    prediction = nn.predict(test_data)
+    # print(f"prediciton vs true {prediction} {true_label}")
+    if prediction != true_label:
+      incorrect += 1
+  error = incorrect / len(df)
+  print("error is ", error)
 
 if __name__ == "__main__":
   train_csv = sys.argv[1]
@@ -202,11 +194,18 @@ if __name__ == "__main__":
 
   # format data
   # not sure if I need this
-  # train_df[LABEL] = train_df[LABEL].apply(lambda x: 1 if x == 1 else -1)
-  # test_df[LABEL] = test_df[LABEL].apply(lambda x: 1 if x == 1 else -1)
+  train_df[LABEL] = train_df[LABEL].apply(lambda x: 1 if x == 1 else -1)
+  test_df[LABEL] = test_df[LABEL].apply(lambda x: 1 if x == 1 else -1)
   train_df.insert(loc=0, column="baisvalue", value=1)
   test_df.insert(loc=0, column="baisvalue", value=1)
 
-  nn = NeuralNetwork(None)
-  # nn.predict_example([1,1,1])
+  nn = NeuralNetwork(None, True)
   nn.back_propigation([1,1,1,1])
+  WIDTHS = [5, 10, 25, 50, 100]
+  for width in WIDTHS:
+    nn = NeuralNetwork(width, False)
+    nn.stochastic_gradient_descent(train_df, 10, 0.05)
+    print("training error")
+    test_network(train_df, nn)
+    print("test error")
+    test_network(test_df, nn)
