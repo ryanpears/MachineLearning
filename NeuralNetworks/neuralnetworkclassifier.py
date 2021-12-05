@@ -207,8 +207,10 @@ if __name__ == "__main__":
   train_df.insert(loc=0, column="baisvalue", value=1)
   test_df.insert(loc=0, column="baisvalue", value=1)
 
-  # nn = NeuralNetwork(None, True)
-  # nn.back_propigation([1,1,1,1])
+  print("2a ")
+  nn = NeuralNetwork(None, True)
+  test_weights, test_loss = nn.back_propigation([1,1,1,1])
+  print(f"learned weights after 1 iteration on test network: {test_weights}")
 
   print("2b random weight initialzation")
   WIDTHS = [5, 10, 25, 50, 100]
