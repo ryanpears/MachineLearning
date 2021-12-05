@@ -59,3 +59,10 @@ This file can also be run on the bank-note dataset with `python3 SVM/svm.py SVM/
 
 The syntax for using this script from the command  line is: `python3 SVM/svm.py train.csv test.csv columns.txt` 
 where columns.txt is a comma seperated text file of column names.
+
+# Neural Network Classifier
+
+use runHW5.sh to run a test script on the bank-note dataset.
+
+This file can also be run with `python3 NeuralNetworks/neuralnetworkclassifier.py NeuralNetworks/bank-note/train.csv NeuralNetworks/bank-note/test.csv NeuralNetworks/bank-note/columns.txt`
+
