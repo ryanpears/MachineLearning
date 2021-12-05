@@ -1,0 +1,1 @@
+python3 NeuralNetworks/neuralnetworkclassifier.py NeuralNetworks/bank-note/train.csv NeuralNetworks/bank-note/test.csv NeuralNetworks/bank-note/columns.txt

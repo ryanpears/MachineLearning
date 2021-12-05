@@ -38,16 +38,24 @@ class NeuralNetwork:
       #shuffle the data
       df = df.sample(frac=1).reset_index(drop=True)  
       gamma = learning_rate(gamma_0, epoch)
+      total_loss_gradient = 0
       # for each training example in df
       for index, row in df.iterrows():
         # treat example as the whole dataset
         #compute gradient
-        gradient = self.back_propigation(row)
+        gradient, loss_gradient = self.back_propigation(row)
+        total_loss_gradient += loss_gradient
         # assert gradient.shape() == self.weights.shape()
         # update w = w - learning_rate  * gradient
         self.weights = self.weights - np.multiply(gamma, gradient)
-      #TODO computer convergence
-    print("learned weights ", self.weights)
+      #TODO compute convergence
+
+      eps = epoch*0.01
+      print(f"loss at epoch {epoch} is {total_loss_gradient}")
+      if (abs(total_loss_gradient) < eps):
+        print(f"converged in {epoch+1} epochs")
+        break
+      # print("learned weights ", self.weights)
 
   def back_propigation(self, training_example):
     # messy and really gross but it works
@@ -115,7 +123,7 @@ class NeuralNetwork:
             nabla_w[layer_index][j][i] = loss_prime(result, y) * activation_vectors[(layer_index)][i]
             
 
-    return nabla_w
+    return nabla_w, loss_prime(result, y)
 
   def predict(self, example):
     # ugly but I'm confident
@@ -199,12 +207,26 @@ if __name__ == "__main__":
   train_df.insert(loc=0, column="baisvalue", value=1)
   test_df.insert(loc=0, column="baisvalue", value=1)
 
-  nn = NeuralNetwork(None, True)
-  nn.back_propigation([1,1,1,1])
+  # nn = NeuralNetwork(None, True)
+  # nn.back_propigation([1,1,1,1])
+
+  print("2b random weight initialzation")
   WIDTHS = [5, 10, 25, 50, 100]
   for width in WIDTHS:
+    print(f"for width of {width}")
+    nn = NeuralNetwork(width, True)
+    nn.stochastic_gradient_descent(train_df, 50, 0.05)
+    print("training error")
+    test_network(train_df, nn)
+    print("test error")
+    test_network(test_df, nn)
+
+  print("2c all weights initialized to 0")
+  WIDTHS = [5, 10, 25, 50, 100]
+  for width in WIDTHS:
+    print(f"for width of {width}")
     nn = NeuralNetwork(width, False)
-    nn.stochastic_gradient_descent(train_df, 10, 0.05)
+    nn.stochastic_gradient_descent(train_df, 50, 0.05)
     print("training error")
     test_network(train_df, nn)
     print("test error")
